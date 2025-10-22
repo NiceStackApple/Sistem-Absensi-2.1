@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <title>Sistem Absensi Robotic</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+
+    <style>
+        /* =============================================== */
+        /* == STYLE DASAR & TAMPILAN MOBILE             == */
+        /* =============================================== */
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        /* Di mobile, container akan mengisi layar secara wajar */
+        .container {
+            width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        #login-view { margin-top: 20px; }
+        #dashboard-view { display: none; }
+
+        /* -- Style Footer (Berlaku untuk semua ukuran) -- */
+        .footer-custom {
+            background-color: #212529; color: #adb5bd;
+            padding-top: 2rem; padding-bottom: 1rem; margin-top: 3rem;
+        }
+        .footer-custom h5 { color: #ffffff; }
+        .footer-custom a { color: #adb5bd; text-decoration: none; }
+        .footer-custom a:hover { color: #ffffff; text-decoration: underline; }
+        .footer-custom hr { border-top: 1px solid #495057; }
+
+        /* Atur ulang kolom footer agar menumpuk rapi di mobile */
+        .footer-custom .row > div {
+            margin-bottom: 1.5rem;
+        }
+        
+        /* =============================================== */
+        /* == ATURAN TAMBAHAN UNTUK DESKTOP (> 768px)   == */
+        /* =============================================== */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 720px; /* Lebar container normal di desktop */
+            }
+        }
+        @media (min-width: 992px) {
+            .container {
+                max-width: 960px;
+            }
+        }
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1140px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-view">
+            <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-bottom: 20px;">
+            <div class="card">
+                <div class="card-header"><h3>Login Absensi Robotic</h3></div>
+                <div class="card-body">
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    <form id="login-form">
+                        <div class="form-group"><label for="nama">Nama</label><input type="text" class="form-control" id="nama" required></div>
+                        <div class="form-group"><label for="password">Password</label><input type="password" class="form-control" id="password" required></div>
+                        <button type="submit" class="btn btn-primary btn-block"><span id="login-button-text">Login</span><div id="login-loader" class="spinner-border spinner-border-sm" role="status" style="display: none;"></div></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="dashboard-view">
+            <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
+            <div class="d-flex justify-content-between align-items-center mt-4 mb-3"><h2 id="welcome-message">Selamat Datang, Pengguna!</h2><button class="btn btn-danger" onclick="logout()">Logout</button></div>
+            <div class="card mb-4"><div class="card-header">Menu Aksi</div><div class="card-body text-center"><button class="btn btn-success btn-lg m-2" data-toggle="modal" data-target="#qrModal">Absen Hadir (Scan QR)</button><button class="btn btn-warning btn-lg m-2" data-toggle="modal" data-target="#izinModal">Ajukan Izin</button></div></div>
+            <div class="card mb-4"><div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div><div class="card-body"><p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p><div id="monthly-attendance" class="row"></div></div></div>
+            <div class="card"><div class="card-header">10 Riwayat Absensi Terakhir</div><div class="card-body table-responsive"><table class="table table-striped table-sm mb-0"><thead><tr><th>Waktu</th><th>Status</th><th>Lokasi</th></tr></thead><tbody id="history-body"></tbody></table></div></div>
+            <footer id="app-footer" class="footer-custom" style="display: none;"><div class="container"><div class="row justify-content-between"><div class="col-md-5 mb-4"><h5>Robotic Man2Kudus</h5><p style="font-size: 0.9rem;">Sistem Absensi Digital untuk efisiensi dan transparansi pencatatan kehadiran anggota ekstrakurikuler Robotic.</p></div><div class="col-md-auto mb-4"><h5>Navigasi</h5><ul class="list-unstyled"><li><a href="#" onclick="location.reload()">Halaman Utama</a></li></ul></div><div class="col-md-auto mb-4"><h5>Info Kontak</h5><ul class="list-unstyled"><li><a href="https://wa.me/6282327023602" target="_blank" rel="noopener noreferrer">WhatsApp (Seila)</a></li><li><a href="https://www.instagram.com/m2k.robotics/" target="_blank" rel="noopener noreferrer">Instagram</a></li></ul></div></div><hr><div class="text-center pt-2"><p class="mb-0" style="font-size: 0.8rem;">&copy; 2025 Robotic Man2Kudus. All Rights Reserved.</p></div></div></footer>
+        </div>
+    </div>
+    <div class="modal fade" id="qrModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Scan QR Code Absensi</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body"><div id="qr-reader" style="width: 100%;"></div><div id="qr-result" class="mt-3"></div></div></div></div></div>
+    <div class="modal fade" id="izinModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Form Pengajuan Izin</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body text-left"><form id="izin-form"><div class="form-group"><label for="alasan">1. Tuliskan alasan izin Anda:</label><textarea class="form-control" id="alasan" rows="3" required></textarea></div><div class="form-group"><label>2. Ambil Foto Bukti (Wajib)</label><div id="camera-container" class="text-center"><video id="video-preview" width="100%" style="display: none;"></video><canvas id="photo-canvas" style="display: none;"></canvas><img id="photo-preview" src="" width="100%" style="display: none;" class="mb-2"/><button type="button" id="start-camera-btn" class="btn btn-secondary">Buka Kamera</button><button type="button" id="capture-btn" class="btn btn-primary" style="display: none;">Jepret Foto</button></div></div><button type="submit" class="btn btn-primary mt-3">Kirim Izin</button></form></div></div></div></div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+    // ===================================
+    // GANTI DENGAN URL API DARI LANGKAH 1
+    // ===================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbyalnxYGK8agErIn2ZNlUrkG5iPwlA46nC1Q-z8q5nTffsifCnt8i326XVTWW676udm/exec";
+
+    let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
+    // ... (sisa variabel global)
+    // ===================================
+    // “RUANG TAMU” / GLOBAL SCOPE
+    // Berisi semua variabel global dan DEFINISI fungsi
+    // ===================================
+
+
+    function showDashboard() {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        document.getElementById('app-footer').style.display = 'block';
+        document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
+        fetch(API_URL, {
+            method: 'POST',
+            // redirect: "follow",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ 
+                action: 'getDashboardData', 
+                nama: currentUser.nama, 
+                kelas: currentUser.kelas 
+            }),
+            mode: 'cors'
+        })
+        .then(response => response.json())
+        .then(result => {
+            updateDashboardUI(result); // Langsung kirim hasil JSON ke fungsi UI
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard data:', error);
+            alert('Gagal memuat data dashboard: ' + error.message);
+        });
+    }
+
+    function updateDashboardUI(data) {
+        if (data.success) {
+            document.getElementById('current-month').innerText = data.currentMonth;
+            document.getElementById('current-week').innerText = data.currentWeek;
+            const statusBadge = document.getElementById('current-status');
+            statusBadge.innerText = data.currentStatus;
+            statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : 'badge-danger');
+            const monthlyDiv = document.getElementById('monthly-attendance');
+            monthlyDiv.innerHTML = '';
+            data.monthlyAttendance.forEach(att => {
+                const statusClass = att.status === 'Hadir' ? 'text-success' : att.status === 'Izin' ? 'text-warning' : 'text-danger';
+                monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.status}</span></div>`;
+            });
+            const historyBody = document.getElementById('history-body');
+            historyBody.innerHTML = '';
+            if (data.history.length > 0) {
+                data.history.forEach(log => {
+                    let statusClass = 'badge-secondary';
+                    if (log.status === 'Hadir') statusClass = 'badge-success';
+                    else if (log.status === 'Izin') statusClass = 'badge-warning';
+                    else if (log.status === 'Alpha') statusClass = 'badge-danger';
+                    historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
+                });
+            } else {
+                historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
+            }
+        } else {
+            alert('Gagal memuat data dashboard: ' + data.message);
+        }
+    }
+
+    function handleServerResponse(response) {
+        if (response.success) {
+            $('#qrModal').modal('hide');
+            $('#izinModal').modal('hide');
+            document.getElementById('izin-form').reset();
+            alert(response.message); 
+            showDashboard();
+        } else {
+            alert("Gagal: " + response.message);
+        }
+    }
+
+    function stopCamera() {
+        const video = document.getElementById('video-preview');
+        const startCameraBtn = document.getElementById('start-camera-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        video.style.display = 'none';
+        startCameraBtn.style.display = 'inline-block';
+        captureBtn.style.display = 'none';
+    }
+
+    function logout() {
+        localStorage.removeItem('loggedInUser');
+        currentUser = null;
+        location.reload();
+    }
+
+    // ===================================
+    // “KAMAR KHUSUS” / DOMContentLoaded
+    // Semua kode yang MEMASANG event listener ke elemen HTML ditaruh di sini
+    // ===================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cek login dari session
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            currentUser = JSON.parse(loggedInUser);
+            showDashboard();
+        }
+
+        // Event listener untuk Login
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const loginButtonText = document.getElementById('login-button-text');
+            const loginLoader = document.getElementById('login-loader');
+            loginButtonText.style.display = 'none';
+            loginLoader.style.display = 'inline-block';
+            const nama = document.getElementById('nama').value;
+            const password = document.getElementById('password').value;
+            // GANTIKAN DENGAN BLOK FETCH INI
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ 
+                    action: 'authenticateUser', 
+                    nama: nama, 
+                    password: password 
+                }),
+                mode: 'cors' 
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    currentUser = { nama: result.nama, kelas: result.kelas };
+                    localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+                    showDashboard();
+                } else {
+                    const errorMessage = document.getElementById('error-message');
+                    errorMessage.innerText = result.message || 'Login gagal.';
+                    errorMessage.style.display = 'block';
+                    // Kembalikan tombol login
+                    loginButtonText.style.display = 'inline-block';
+                    loginLoader.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.innerText = 'Gagal terhubung ke server: ' + error.message;
+                errorMessage.style.display = 'block';
+                // Kembalikan tombol login
+                loginButtonText.style.display = 'inline-block';
+                loginLoader.style.display = 'none';
+            });
+        });
+
+        // Event listener untuk Kirim Izin
+        document.getElementById('izin-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const submitButton = this.querySelector('button[type="submit"]');
+            const alasan = document.getElementById('alasan').value;
+            if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+            fetch
+                .withSuccessHandler(function(response) {
+                    handleServerResponse(response);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Kirim Izin';
+                })
+                .withFailureHandler(function(error) {
+                    alert("Terjadi kesalahan teknis: " + error.message);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Kirim Izin';
+                })
+                fetch(API_URL, {
+                    method: 'POST',
+                    // redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        action: 'markIzinFromDashboard',
+                        nama: currentUser.nama,
+                        kelas: currentUser.kelas,
+                        alasan: alasan,
+                        imageData: capturedImageData // Data gambar base64 dikirim
+                    }),
+                    mode: 'cors'
+                })
+                .then(response => response.json())
+                .then(result => {
+                    handleServerResponse(result); // Panggil fungsi yang sudah ada
+                    // Kembalikan tombol ke normal
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Kirim Izin';
+                })
+                .catch(error => {
+                    console.error('Error submitting izin:', error);
+                    alert("Terjadi kesalahan teknis: " + error.message);
+                    // Kembalikan tombol jika gagal
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Kirim Izin';
+                });
+        });
+
+        // Event listener untuk Kamera Izin
+        document.getElementById('start-camera-btn').addEventListener('click', async () => {
+            const video = document.getElementById('video-preview');
+            const photoPreview = document.getElementById('photo-preview');
+            const startCameraBtn = document.getElementById('start-camera-btn');
+            const captureBtn = document.getElementById('capture-btn');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                photoPreview.style.display = 'none';
+                startCameraBtn.style.display = 'none';
+                captureBtn.style.display = 'inline-block';
+                video.play();
+            } catch (err) { alert("Tidak bisa mengakses kamera: " + err); }
+        });
+
+        document.getElementById('capture-btn').addEventListener('click', () => {
+            const video = document.getElementById('video-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const photoPreview = document.getElementById('photo-preview');
+            const startCameraBtn = document.getElementById('start-camera-btn');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            capturedImageData = canvas.toDataURL('image/jpeg');
+            photoPreview.src = capturedImageData;
+            video.style.display = 'none';
+            photoPreview.style.display = 'block';
+            document.getElementById('capture-btn').style.display = 'none';
+            startCameraBtn.innerText = 'Ambil Ulang';
+            startCameraBtn.style.display = 'inline-block';
+            stopCamera();
+        });
+
+        // Event listener untuk Modal
+        $('#izinModal').on('hide.bs.modal', function(){
+            stopCamera();
+            document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('photo-preview').src = '';
+            capturedImageData = null;
+            document.getElementById('start-camera-btn').innerText = 'Buka Kamera';
+            document.getElementById('izin-form').reset();
+        });
+
+        $('#qrModal').on('show.bs.modal', function (e) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            const qrResultElement = document.getElementById('qr-result');
+            qrResultElement.innerText = "Arahkan kamera ke QR Code...";
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                if (html5QrCode.isScanning) {
+                    qrResultElement.innerText = `Scan berhasil! Memproses...`;
+                    html5QrCode.stop().then(ignore => {
+                        fetch(API_URL, {
+                        method: 'POST',
+                        // redirect: "follow",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: 'markHadirViaQR',
+                            nama: currentUser.nama,
+                            kelas: currentUser.kelas,
+                            qrCodeData: decodedText // Hasil scan QR
+                        }),
+                        mode: 'cors'
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        handleServerResponse(result); // Panggil fungsi yang sudah ada
+                    })
+                    .catch(error => {
+                        console.error('Error submitting QR:', error);
+                        alert("Terjadi kesalahan teknis: " + error.message);
+                        // (Opsional) Tampilkan pesan error di qrResultElement
+                        document.getElementById('qr-result').innerText = `Error: ${error.message}`;
+                    });
+                    });
+                }
+            };
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                .catch(err => {
+                    qrResultElement.innerText = "ERROR: Gagal memulai kamera.";
+                });
+        });
+
+        $('#qrModal').on('hide.bs.modal', function (e) {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -264,17 +264,6 @@
             if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
-            fetch
-                .withSuccessHandler(function(response) {
-                    handleServerResponse(response);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Kirim Izin';
-                })
-                .withFailureHandler(function(error) {
-                    alert("Terjadi kesalahan teknis: " + error.message);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Kirim Izin';
-                })
                 fetch(API_URL, {
                     method: 'POST',
                     // redirect: "follow",

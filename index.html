@@ -121,7 +121,7 @@ function showDashboard() {
 
 // ganti API_URL menjadi path proxy local di Vercel
      
-        fetch(PROXY_URL, {
+        fetch(API_URL, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -401,6 +401,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

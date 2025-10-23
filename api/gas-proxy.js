@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxz_PP1PY5DzI9QY62C9jQeA0cLS2lU-zTrgCRqDFGCcYRusL6IU2Q0aHyh0yvs1RWX/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxEo7ayu9qtIDCccyx8-hvCv87zAM1OcG2JzmWtSAz9crtM5Gml6PHfpkjNAqcZ0KXr/exec";
 
   try {
     const fetchOptions = {

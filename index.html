@@ -112,14 +112,15 @@
     // ===================================
 
 
-    function showDashboard() {
-        document.getElementById('login-view').style.display = 'none';
-        document.getElementById('dashboard-view').style.display = 'block';
-        document.getElementById('app-footer').style.display = 'block';
-        document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
-// ganti API_URL menjadi path proxy local di Vercel
-        const PROXY_URL = "/api/gas-proxy"; // untuk client di domain yang sama setelah deploy
+function showDashboard() {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'block';
+    document.getElementById('app-footer').style.display = 'block';
+    document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
+}
 
+// ganti API_URL menjadi path proxy local di Vercel
+     
         fetch(PROXY_URL, {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
@@ -230,40 +231,45 @@
             const nama = document.getElementById('nama').value;
             const password = document.getElementById('password').value;
             // GANTIKAN DENGAN BLOK FETCH INI
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ 
-                    action: 'authenticateUser', 
-                    nama: nama, 
-                    password: password 
-                }),
-                mode: 'cors' 
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    currentUser = { nama: result.nama, kelas: result.kelas };
-                    localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
-                    showDashboard();
-                } else {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        action: 'authenticateUser', 
+                        nama, 
+                        password 
+                    })
+                })
+                .then(async res => {
+                    const text = await res.text();
+                    try {
+                        return JSON.parse(text);
+                    } catch {
+                        console.error("Response bukan JSON:", text);
+                        throw new Error("Server mengembalikan data bukan JSON.");
+                    }
+                })
+                .then(result => {
+                    if (result.success) {
+                        currentUser = { nama: result.nama, kelas: result.kelas };
+                        localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+                        showDashboard();
+                    } else {
+                        const errorMessage = document.getElementById('error-message');
+                        errorMessage.innerText = result.message || 'Login gagal.';
+                        errorMessage.style.display = 'block';
+                        document.getElementById('login-button-text').style.display = 'inline-block';
+                        document.getElementById('login-loader').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
                     const errorMessage = document.getElementById('error-message');
-                    errorMessage.innerText = result.message || 'Login gagal.';
+                    errorMessage.innerText = 'Gagal terhubung ke server: ' + error.message;
                     errorMessage.style.display = 'block';
-                    // Kembalikan tombol login
-                    loginButtonText.style.display = 'inline-block';
-                    loginLoader.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                const errorMessage = document.getElementById('error-message');
-                errorMessage.innerText = 'Gagal terhubung ke server: ' + error.message;
-                errorMessage.style.display = 'block';
-                // Kembalikan tombol login
-                loginButtonText.style.display = 'inline-block';
-                loginLoader.style.display = 'none';
-            });
+                    document.getElementById('login-button-text').style.display = 'inline-block';
+                    document.getElementById('login-loader').style.display = 'none';
+                });
         });
 
         // Event listener untuk Kirim Izin
@@ -274,21 +280,10 @@
             if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
-            fetch
-                .withSuccessHandler(function(response) {
-                    handleServerResponse(response);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Kirim Izin';
-                })
-                .withFailureHandler(function(error) {
-                    alert("Terjadi kesalahan teknis: " + error.message);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Kirim Izin';
-                })
                 fetch(API_URL, {
                     method: 'POST',
                     // redirect: "follow",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         action: 'markIzinFromDashboard',
                         nama: currentUser.nama,
@@ -296,7 +291,6 @@
                         alasan: alasan,
                         imageData: capturedImageData // Data gambar base64 dikirim
                     }),
-                    mode: 'cors'
                 })
                 .then(response => response.json())
                 .then(result => {
@@ -371,14 +365,13 @@
                         fetch(API_URL, {
                         method: 'POST',
                         // redirect: "follow",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             action: 'markHadirViaQR',
                             nama: currentUser.nama,
                             kelas: currentUser.kelas,
                             qrCodeData: decodedText // Hasil scan QR
                         }),
-                        mode: 'cors'
                     })
                     .then(response => response.json())
                     .then(result => {
@@ -408,4 +401,5 @@
 </script>
 </body>
 </html>
+
 

@@ -5,7 +5,6 @@
     <title>Sistem Absensi Robotic</title>
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <link rel="icon" href="favicon.png" type="image/x-icon">
     
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
@@ -101,7 +100,8 @@
     // ===================================
     // GANTI DENGAN URL API DARI LANGKAH 1
     // ===================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbxf5qjTGPFeNoALE7DgRTqUJf1O_cto3XBoNGIlWAdTOO5vARKAKNnvWv4D7MBCRm5_/exec";
+    const API_URL = "/api/gas-proxy";
+
 
     let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
     // ... (sisa variabel global)
@@ -116,25 +116,33 @@
         document.getElementById('dashboard-view').style.display = 'block';
         document.getElementById('app-footer').style.display = 'block';
         document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
-        fetch(API_URL, {
-            method: 'POST',
-            // redirect: "follow",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ 
-                action: 'getDashboardData', 
-                nama: currentUser.nama, 
-                kelas: currentUser.kelas 
-            }),
-            mode: 'cors'
+// ganti API_URL menjadi path proxy local di Vercel
+        const PROXY_URL = "/api/gas-proxy"; // untuk client di domain yang sama setelah deploy
+
+        fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: 'authenticateUser',
+            nama: nama,
+            password: password
         })
-        .then(response => response.json())
-        .then(result => {
-            updateDashboardUI(result); // Langsung kirim hasil JSON ke fungsi UI
         })
-        .catch(error => {
-            console.error('Error fetching dashboard data:', error);
-            alert('Gagal memuat data dashboard: ' + error.message);
-        });
+        .then(res => res.text())   // Apps Script kita still mengembalikan text (JSON string)
+        .then(txt => {
+        try {
+            const result = JSON.parse(txt);
+            if (result.success) {
+            // logic lama
+            } else {
+            // logic error lama
+            }
+        } catch (err) {
+            console.error('GAS returned invalid JSON or proxy issue:', txt);
+        }
+        })
+        .catch(err => { console.error(err); });
+
     }
 
     function updateDashboardUI(data) {
@@ -265,6 +273,17 @@
             if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+            fetch
+                .withSuccessHandler(function(response) {
+                    handleServerResponse(response);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Kirim Izin';
+                })
+                .withFailureHandler(function(error) {
+                    alert("Terjadi kesalahan teknis: " + error.message);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Kirim Izin';
+                })
                 fetch(API_URL, {
                     method: 'POST',
                     // redirect: "follow",

@@ -149,8 +149,20 @@ function showDashboard() {
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
-                const statusClass = att.statusTeks === 'Hadir' ? 'text-success' : att.statusTeks === 'Izin' ? 'text-warning' : 'text-danger';
-                monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.statusTeks}${att.statusAngka !== "" ? ": " + att.statusAngka : ""}</span></div>`;
+                let statusClass = ''; // Warna normal (hitam)
+                if (att.status === 'Hadir') {
+                    statusClass = 'text-success'; // Hijau
+                } else if (att.status === 'Izin' || att.status.startsWith('(')) {
+                    // Cek 'Izin' ATAU jika statusnya diawali '(' (dari bukti foto)
+                    statusClass = 'text-warning'; // Kuning
+                } else if (att.status === 'Alpha') {
+                    statusClass = 'text-danger'; // Merah
+                } else if (att.status === '-') {
+                    statusClass = 'text-muted'; // Abu-abu
+                }
+                
+                // Tampilkan teks status apa adanya
+                monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.status}</span></div>`;
             });
             const historyBody = document.getElementById('history-body');
             historyBody.innerHTML = '';
@@ -176,7 +188,7 @@ function showDashboard() {
             $('#izinModal').modal('hide');
             document.getElementById('izin-form').reset();
             alert(response.message); 
-            showDashboard();
+            loadDashboard();
         } else {
             alert("Gagal: " + response.message);
         }
@@ -202,6 +214,33 @@ function showDashboard() {
     }
 
     // ===================================
+    // ... (di bawah fungsi logout()) ...
+    // ===================================
+
+    // FUNGSI BARU UNTUK MEMUAT / ME-REFRESH DATA DASHBOARD
+    async function loadDashboard() {
+      if (!currentUser) return; // Pastikan user ada
+      
+      // Tampilkan "Memuat..." dulu selagi mengambil data
+      document.getElementById('current-status').innerText = 'Memuat...';
+      document.getElementById('current-status').className = 'badge badge-secondary';
+      document.getElementById('monthly-attendance').innerHTML = '';
+      document.getElementById('history-body').innerHTML = '<tr><td colspan="3" class="text-center">Memuat riwayat...</td></tr>';
+      
+      try {
+        const dashboardData = await postToAPI({
+          action: 'getDashboardData',
+          nama: currentUser.nama,
+          kelas: currentUser.kelas
+        });
+        updateDashboardUI(dashboardData); // Panggil UI update
+      } catch (err) {
+        console.error('Gagal memuat dashboard:', err);
+        alert('Gagal mengambil data dashboard: ' + err.message);
+      }
+    }
+
+    // ===================================
     // “KAMAR KHUSUS” / DOMContentLoaded
     // Semua kode yang MEMASANG event listener ke elemen HTML ditaruh di sini
     // ===================================
@@ -211,6 +250,8 @@ function showDashboard() {
         if (loggedInUser) {
             currentUser = JSON.parse(loggedInUser);
             showDashboard();
+            loadDashboard(); // <--- TAMBAHKAN INI (FIX BUG "MEMUAT...")
+        }
         }
 
         // Event listener untuk Login
@@ -236,13 +277,7 @@ function showDashboard() {
                   currentUser = { nama: result.nama, kelas: result.kelas };
                   localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
                   showDashboard();
-            
-                  const dashboardData = await postToAPI({
-                    action: 'getDashboardData',
-                    nama: currentUser.nama,
-                    kelas: currentUser.kelas
-                  });
-                  updateDashboardUI(dashboardData);
+                  loadDashboard();
                 } else {
                   const errorMessage = document.getElementById('error-message');
                   errorMessage.innerText = result.message || 'Login gagal.';
@@ -400,6 +435,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

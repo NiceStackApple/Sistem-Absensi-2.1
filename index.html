@@ -220,6 +220,32 @@ function showDashboard() {
       }
     }
 
+        // ... [di bawah fungsi loadDashboard()] ...
+
+    // Fungsi baru untuk mendapatkan lokasi (menggunakan Promise)
+    function getCurrentPosition() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocation tidak didukung oleh browser Anda.'));
+        } else {
+          // Meminta akurasi tinggi,
+          // dan set timeout 5 detik
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              });
+            },
+            () => {
+              reject(new Error('Gagal mendapatkan lokasi. Pastikan GPS aktif dan Anda mengizinkan akses.'));
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+          );
+        }
+      });
+    }
+
     // ===================================
     // “KAMAR KHUSUS” / DOMContentLoaded
     // Semua kode yang MEMASANG event listener ke elemen HTML ditaruh di sini
@@ -352,29 +378,40 @@ function showDashboard() {
             document.getElementById('izin-form').reset();
         });
 
-        $('#qrModal').on('show.bs.modal', function (e) {
-            html5QrCode = new Html5Qrcode("qr-reader");
-            const qrResultElement = document.getElementById('qr-result');
-            qrResultElement.innerText = "Arahkan kamera ke QR Code...";
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // Jadikan fungsinya 'async'
+            const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
                 if (html5QrCode.isScanning) {
-                    qrResultElement.innerText = `Scan berhasil! Memproses...`;
-                    html5QrCode.stop().then(ignore => {postToAPI({
+                    qrResultElement.innerText = `Scan berhasil! Mendapatkan lokasi Anda...`;
+                    
+                    try {
+                        // 1. Hentikan kamera dulu
+                        await html5QrCode.stop();
+
+                        // 2. Ambil lokasi GPS (INI BAGIAN BARU)
+                        const position = await getCurrentPosition(); 
+                        qrResultElement.innerText = `Lokasi didapat! Memproses absensi...`;
+
+                        // 3. Kirim data ke API (termasuk lat/lon)
+                        const result = await postToAPI({
                           action: 'markHadirViaQR',
                           nama: currentUser.nama,
                           kelas: currentUser.kelas,
-                          qrCodeData: decodedText
-                        })
-                        .then(handleServerResponse)
-                        .catch(error => {
-                          console.error('Error submitting QR:', error);
-                          alert("Terjadi kesalahan teknis: " + error.message);
+                          qrCodeData: decodedText,
+                          latitude: position.latitude,  // <-- DATA BARU
+                          longitude: position.longitude // <-- DATA BARU
                         });
+                        
+                        handleServerResponse(result); // Panggil fungsi yang sudah ada
 
-                    });
+                    } catch (error) {
+                        // Ini akan menangkap error dari getCurrentPosition() ATAU postToAPI()
+                        console.error('Error QR/Location:', error);
+                        alert("Terjadi kesalahan: " + error.message);
+                        $('#qrModal').modal('hide'); // Tutup modal jika gagal
+                    }
                 }
             };
+            
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
                 .catch(err => {
                     qrResultElement.innerText = "ERROR: Gagal memulai kamera.";
@@ -415,6 +452,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

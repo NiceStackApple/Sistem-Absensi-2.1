@@ -110,26 +110,6 @@
     // “RUANG TAMU” / GLOBAL SCOPE
     // Berisi semua variabel global dan DEFINISI fungsi
     // ===================================
-        async function postToAPI(data) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000); // timeout 10 detik
-
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      signal: controller.signal
-    });
-    const text = await res.text();
-    clearTimeout(timeout);
-
-    return JSON.parse(text);
-  } catch (err) {
-    clearTimeout(timeout);
-    throw new Error("Server timeout atau koneksi terputus");
-  }
-}
 
 
 
@@ -251,6 +231,7 @@ function showDashboard() {
             currentUser = JSON.parse(loggedInUser);
             showDashboard();
             loadDashboard(); // <--- TAMBAHKAN INI (FIX BUG "MEMUAT...")
+        }
         
 
         // Event listener untuk Login
@@ -405,7 +386,7 @@ function showDashboard() {
                 html5QrCode.stop();
             }
         });
-    });
+    }); //<<<< ini kah error nya???
 
         async function postToAPI(data) {
   console.log("Request dikirim ke API:", data); // <== Tambahan
@@ -434,6 +415,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

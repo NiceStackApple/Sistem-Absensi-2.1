@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwegGIcgjYLZRaFIt9rUh0xebgdygP1AbEg-2ra9u_4HEsTGzbmY2dmeaID3CcB8sgy/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwhbIwPI5s2sq31dUA8l0qIoEAbgTQIxnwNGrt9-VMlJ74UUGkzckDyB8jg3ZFhGkAS/exec";
 
   // Izinkan preflight request dari browser
   if (req.method === "OPTIONS") {

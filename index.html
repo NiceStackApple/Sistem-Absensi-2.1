@@ -149,8 +149,8 @@ function showDashboard() {
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
-                const statusClass = att.status === 'Hadir' ? 'text-success' : att.status === 'Izin' ? 'text-warning' : 'text-danger';
-                monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.status}</span></div>`;
+                const statusClass = att.status.includes('Hadir') ? 'text-success' : att.status.includes('Izin') ? 'text-warning' : 'text-danger';
+                monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.statusTeks}${att.statusAngka !== "" ? ": " + att.statusAngka : ""}</span></div>`;
             });
             const historyBody = document.getElementById('history-body');
             historyBody.innerHTML = '';
@@ -400,6 +400,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

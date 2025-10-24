@@ -149,7 +149,7 @@ function showDashboard() {
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
-                const statusClass = att.status.includes('Hadir') ? 'text-success' : att.status.includes('Izin') ? 'text-warning' : 'text-danger';
+                const statusClass = att.statusTeks === 'Hadir' ? 'text-success' : att.statusTeks === 'Izin' ? 'text-warning' : 'text-danger';
                 monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.statusTeks}${att.statusAngka !== "" ? ": " + att.statusAngka : ""}</span></div>`;
             });
             const historyBody = document.getElementById('history-body');
@@ -400,7 +400,6 @@ function showDashboard() {
 </script>
 </body>
 </html>
-
 
 
 

@@ -18,8 +18,6 @@ export default async function handler(req, res) {
       redirect: "follow"
     };
 
-    };
-
     const response = await fetch(GAS_URL, fetchOptions);
     const text = await response.text();
 
@@ -28,7 +26,6 @@ export default async function handler(req, res) {
     try {
       json = JSON.parse(text);
     } catch (e) {
-      // Kalo bukan JSON (HTML error atau text biasa), log ke console & kirim error JSON aja
       console.error("Invalid JSON from GAS:", text.slice(0, 100));
       json = { success: false, message: "Invalid JSON from GAS", raw: text };
     }

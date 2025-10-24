@@ -372,9 +372,35 @@ function showDashboard() {
             }
         });
     });
+
+        async function postToAPI(data) {
+  console.log("Request dikirim ke API:", data); // <== Tambahan
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: controller.signal
+    });
+    const text = await res.text();
+    console.log("Respon mentah dari API:", text); // <== Tambahan
+
+    clearTimeout(timeout);
+    return JSON.parse(text);
+  } catch (err) {
+    clearTimeout(timeout);
+    throw new Error("Server timeout atau koneksi terputus");
+  }
+}
+
 </script>
 </body>
 </html>
+
 
 
 

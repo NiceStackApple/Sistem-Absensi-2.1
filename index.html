@@ -110,6 +110,27 @@
     // “RUANG TAMU” / GLOBAL SCOPE
     // Berisi semua variabel global dan DEFINISI fungsi
     // ===================================
+        async function postToAPI(data) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // timeout 10 detik
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: controller.signal
+    });
+    const text = await res.text();
+    clearTimeout(timeout);
+
+    return JSON.parse(text);
+  } catch (err) {
+    clearTimeout(timeout);
+    throw new Error("Server timeout atau koneksi terputus");
+  }
+}
+
 
 
 function showDashboard() {
@@ -118,35 +139,6 @@ function showDashboard() {
     document.getElementById('app-footer').style.display = 'block';
     document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
 }
-
-// ganti API_URL menjadi path proxy local di Vercel
-     
-        fetch(API_URL, {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            action: 'authenticateUser',
-            nama: nama,
-            password: password
-        })
-        })
-        .then(res => res.text())   // Apps Script kita still mengembalikan text (JSON string)
-        .then(txt => {
-        try {
-            const result = JSON.parse(txt);
-            if (result.success) {
-            // logic lama
-            } else {
-            // logic error lama
-            }
-        } catch (err) {
-            console.error('GAS returned invalid JSON or proxy issue:', txt);
-        }
-        })
-        .catch(err => { console.error(err); });
-
-
-
     function updateDashboardUI(data) {
         if (data.success) {
             document.getElementById('current-month').innerText = data.currentMonth;
@@ -222,91 +214,83 @@ function showDashboard() {
         }
 
         // Event listener untuk Login
-        document.getElementById('login-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const loginButtonText = document.getElementById('login-button-text');
-            const loginLoader = document.getElementById('login-loader');
-            loginButtonText.style.display = 'none';
-            loginLoader.style.display = 'inline-block';
-            const nama = document.getElementById('nama').value;
-            const password = document.getElementById('password').value;
-            // GANTIKAN DENGAN BLOK FETCH INI
-                fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        action: 'authenticateUser', 
-                        nama, 
-                        password 
-                    })
-                })
-                .then(async res => {
-                    const text = await res.text();
-                    try {
-                        return JSON.parse(text);
-                    } catch {
-                        console.error("Response bukan JSON:", text);
-                        throw new Error("Server mengembalikan data bukan JSON.");
-                    }
-                })
-                .then(result => {
-                    if (result.success) {
-                        currentUser = { nama: result.nama, kelas: result.kelas };
-                        localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
-                        showDashboard();
-                    } else {
-                        const errorMessage = document.getElementById('error-message');
-                        errorMessage.innerText = result.message || 'Login gagal.';
-                        errorMessage.style.display = 'block';
-                        document.getElementById('login-button-text').style.display = 'inline-block';
-                        document.getElementById('login-loader').style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    const errorMessage = document.getElementById('error-message');
-                    errorMessage.innerText = 'Gagal terhubung ke server: ' + error.message;
-                    errorMessage.style.display = 'block';
-                    document.getElementById('login-button-text').style.display = 'inline-block';
-                    document.getElementById('login-loader').style.display = 'none';
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+              e.preventDefault();
+            
+              const loginButtonText = document.getElementById('login-button-text');
+              const loginLoader = document.getElementById('login-loader');
+              loginButtonText.style.display = 'none';
+              loginLoader.style.display = 'inline-block';
+            
+              const nama = document.getElementById('nama').value;
+              const password = document.getElementById('password').value;
+            
+              try {
+                const result = await postToAPI({
+                  action: 'authenticateUser',
+                  nama,
+                  password
                 });
-        });
+            
+                if (result.success) {
+                  currentUser = { nama: result.nama, kelas: result.kelas };
+                  localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+                  showDashboard();
+            
+                  const dashboardData = await postToAPI({
+                    action: 'getDashboardData',
+                    nama: currentUser.nama,
+                    kelas: currentUser.kelas
+                  });
+                  updateDashboardUI(dashboardData);
+                } else {
+                  const errorMessage = document.getElementById('error-message');
+                  errorMessage.innerText = result.message || 'Login gagal.';
+                  errorMessage.style.display = 'block';
+                }
+              } catch (err) {
+                console.error('Error:', err);
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.innerText = 'Gagal terhubung ke server: ' + err.message;
+                errorMessage.style.display = 'block';
+              } finally {
+                loginButtonText.style.display = 'inline-block';
+                loginLoader.style.display = 'none';
+              }
+            });
+            
+
 
         // Event listener untuk Kirim Izin
-        document.getElementById('izin-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const submitButton = this.querySelector('button[type="submit"]');
-            const alasan = document.getElementById('alasan').value;
-            if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
-                fetch(API_URL, {
-                    method: 'POST',
-                    // redirect: "follow",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: 'markIzinFromDashboard',
-                        nama: currentUser.nama,
-                        kelas: currentUser.kelas,
-                        alasan: alasan,
-                        imageData: capturedImageData // Data gambar base64 dikirim
-                    }),
-                })
-                .then(response => response.json())
-                .then(result => {
-                    handleServerResponse(result); // Panggil fungsi yang sudah ada
-                    // Kembalikan tombol ke normal
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Kirim Izin';
-                })
-                .catch(error => {
-                    console.error('Error submitting izin:', error);
-                    alert("Terjadi kesalahan teknis: " + error.message);
-                    // Kembalikan tombol jika gagal
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Kirim Izin';
+            document.getElementById('izin-form').addEventListener('submit', async function(e) {
+              e.preventDefault();
+              const submitButton = this.querySelector('button[type="submit"]');
+              const alasan = document.getElementById('alasan').value;
+              if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
+            
+              submitButton.disabled = true;
+              submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+            
+              try {
+                const result = await postToAPI({
+                  action: 'markIzinFromDashboard',
+                  nama: currentUser.nama,
+                  kelas: currentUser.kelas,
+                  alasan,
+                  imageData: capturedImageData
                 });
-        });
+                handleServerResponse(result);
+              } catch (error) {
+                console.error('Error submitting izin:', error);
+                alert("Terjadi kesalahan teknis: " + error.message);
+              } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Kirim Izin';
+              }
+            });
+            
+
+
 
         // Event listener untuk Kamera Izin
         document.getElementById('start-camera-btn').addEventListener('click', async () => {
@@ -361,28 +345,18 @@ function showDashboard() {
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 if (html5QrCode.isScanning) {
                     qrResultElement.innerText = `Scan berhasil! Memproses...`;
-                    html5QrCode.stop().then(ignore => {
-                        fetch(API_URL, {
-                        method: 'POST',
-                        // redirect: "follow",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            action: 'markHadirViaQR',
-                            nama: currentUser.nama,
-                            kelas: currentUser.kelas,
-                            qrCodeData: decodedText // Hasil scan QR
-                        }),
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        handleServerResponse(result); // Panggil fungsi yang sudah ada
-                    })
-                    .catch(error => {
-                        console.error('Error submitting QR:', error);
-                        alert("Terjadi kesalahan teknis: " + error.message);
-                        // (Opsional) Tampilkan pesan error di qrResultElement
-                        document.getElementById('qr-result').innerText = `Error: ${error.message}`;
-                    });
+                    html5QrCode.stop().then(ignore => {postToAPI({
+                          action: 'markHadirViaQR',
+                          nama: currentUser.nama,
+                          kelas: currentUser.kelas,
+                          qrCodeData: decodedText
+                        })
+                        .then(handleServerResponse)
+                        .catch(error => {
+                          console.error('Error submitting QR:', error);
+                          alert("Terjadi kesalahan teknis: " + error.message);
+                        });
+
                     });
                 }
             };
@@ -401,6 +375,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

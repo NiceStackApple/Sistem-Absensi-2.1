@@ -13,9 +13,11 @@ export default async function handler(req, res) {
     // --- Forward ke Google Apps Script ---
     const fetchOptions = {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // bukan application/json
       body: JSON.stringify(req.body),
       redirect: "follow"
+    };
+
     };
 
     const response = await fetch(GAS_URL, fetchOptions);

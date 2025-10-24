@@ -368,17 +368,16 @@ function showDashboard() {
             stopCamera();
         });
 
-        // Event listener untuk Modal
-        $('#izinModal').on('hide.bs.modal', function(){
-            stopCamera();
-            document.getElementById('photo-preview').style.display = 'none';
-            document.getElementById('photo-preview').src = '';
-            capturedImageData = null;
-            document.getElementById('start-camera-btn').innerText = 'Buka Kamera';
-            document.getElementById('izin-form').reset();
-        });
-
-        // Jadikan fungsinya 'async'
+        // =======================================================
+        // EVENT LISTENER UNTUK MODAL QR (PEMBUNGKUS BARU)
+        // =======================================================
+        $('#qrModal').on('show.bs.modal', function (e) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            const qrResultElement = document.getElementById('qr-result');
+            qrResultElement.innerText = "Arahkan kamera ke QR Code...";
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            // KODE SCANNER KAMU (DARI LINE 407) KITA PINDAH KE DALAM SINI
             const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
                 if (html5QrCode.isScanning) {
                     qrResultElement.innerText = `Scan berhasil! Mendapatkan lokasi Anda...`;
@@ -412,18 +411,21 @@ function showDashboard() {
                 }
             };
             
+            // KODE START SCANNER (DARI LINE 436) KITA PINDAH KE DALAM SINI
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
                 .catch(err => {
                     qrResultElement.innerText = "ERROR: Gagal memulai kamera.";
                 });
         });
 
+        // LISTENER HIDE.BS.MODAL (DARI LINE 443) KITA PINDAH KE DALAM SINI
         $('#qrModal').on('hide.bs.modal', function (e) {
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.stop();
             }
         });
-    }); //<<<< ini kah error nya???
+
+    }); // <-- INI ADALAH PENUTUP ASLI DARI DOMContentLoaded (DARI LINE 441)
 
         async function postToAPI(data) {
   console.log("Request dikirim ke API:", data); // <== Tambahan
@@ -452,6 +454,7 @@ function showDashboard() {
 </script>
 </body>
 </html>
+
 
 
 

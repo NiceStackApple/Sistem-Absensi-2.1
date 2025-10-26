@@ -18,7 +18,6 @@
             background-color: #f8f9fa;
         }
         
-        /* Di mobile, container akan mengisi layar secara wajar */
         .container {
             width: 100%;
             padding-right: 15px;
@@ -29,18 +28,45 @@
 
         #login-view { margin-top: 20px; }
         #dashboard-view { display: none; }
+        
+        /* =============================================== */
+        /* == UI POLISH (BARU)                          == */
+        /* =============================================== */
+        
+        /* Bikin kartu jadi "halus" */
+        .card {
+            border-radius: 0.75rem; /* Tepi lebih tumpul */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Kasih bayangan */
+            border: none; /* Hapus border asli bootstrap */
+        }
+        
+        /* Halusin tombol */
+        .btn {
+            border-radius: 0.5rem;
+        }
+
+        /* Border "Biru Putih Robotic" untuk tabel admin */
+        #sheet-viewer-table {
+            border: 2px solid #007bff; /* Biru */
+            background-color: #ffffff; /* Putih */
+        }
+        #sheet-viewer-table th {
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        /* =============================================== */
 
         /* -- Style Footer (Berlaku untuk semua ukuran) -- */
         .footer-custom {
             background-color: #212529; color: #adb5bd;
             padding-top: 2rem; padding-bottom: 1rem; margin-top: 3rem;
+            border-radius: 0.75rem 0.75rem 0 0; /* Tepi atas tumpul */
         }
         .footer-custom h5 { color: #ffffff; }
         .footer-custom a { color: #adb5bd; text-decoration: none; }
         .footer-custom a:hover { color: #ffffff; text-decoration: underline; }
         .footer-custom hr { border-top: 1px solid #495057; }
 
-        /* Atur ulang kolom footer agar menumpuk rapi di mobile */
         .footer-custom .row > div {
             margin-bottom: 1.5rem;
         }
@@ -50,7 +76,7 @@
         /* =============================================== */
         @media (min-width: 768px) {
             .container {
-                max-width: 720px; /* Lebar container normal di desktop */
+                max-width: 720px;
             }
         }
         @media (min-width: 992px) {
@@ -81,56 +107,150 @@
                 </div>
             </div>
         </div>
+        
         <div id="dashboard-view">
             <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
-            <div class="d-flex justify-content-between align-items-center mt-4 mb-3"><h2 id="welcome-message">Selamat Datang, Pengguna!</h2><button class="btn btn-danger" onclick="logout()">Logout</button></div>
-            <div id="running-text-container" class="alert alert-info" style="display: none; font-weight: bold;">
+            
+            <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+                <h2 id="welcome-message" style="font-size: 1.75rem;">Selamat Datang, Pengguna!</h2>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+            
+            <div id="running-text-container" class="alert alert-info" style="display: none; font-weight: bold; border-radius: 0.5rem;">
                <marquee id="running-text-content" behavior="scroll" direction="left"></marquee>
-             </div>
-            <div class="card mb-4"><div class="card-header">Menu Aksi</div><div class="card-body text-center"><button class="btn btn-success btn-lg m-2" data-toggle="modal" data-target="#qrModal">Absen Hadir (Scan QR)</button><button class="btn btn-warning btn-lg m-2" data-toggle="modal" data-target="#izinModal">Ajukan Izin</button></div></div>
-                <div id="admin-panel" class="card mb-4" style="display: none; border-color: #dc3545;">
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">Menu Aksi</div>
+                <div class="card-body text-center">
+                    <button class="btn btn-success btn-lg m-2" data-toggle="modal" data-target="#qrModal">Absen Hadir (Scan QR)</button>
+                    <button class="btn btn-warning btn-lg m-2" data-toggle="modal" data-target="#izinModal">Ajukan Izin</button>
+                </div>
+            </div>
+            
+            <div id="admin-panel" class="card mb-4" style="display: none; border: 2px solid #dc3545;">
               <div class="card-header bg-danger text-white">
-                Panel Admin: Atur Status Mingguan
+                Panel Admin
               </div>
-              
               <div class="card-body">
                 <form id="running-text-form" class="mb-3">
-               <div class="form-group">
-                 <label for="running-text-input"><b>Teks Berjalan</b> (Kosongkan untuk menghapus):</label>
-                 <input type="text" class="form-control" id="running-text-input" placeholder="Tulis pengumuman di sini...">
-               </div>
-               <button type="button" id="set-running-text-btn" class="btn btn-primary btn-block">Set Teks Berjalan</button>
-             </form>
+                   <div class="form-group">
+                     <label for="running-text-input"><b>Teks Berjalan</b> (Kosongkan untuk menghapus):</label>
+                     <input type="text" class="form-control" id="running-text-input" placeholder="Tulis pengumuman di sini...">
+                   </div>
+                   <button type="button" id="set-running-text-btn" class="btn btn-primary btn-block">Set Teks Berjalan</button>
+                </form>
+                
+                <hr>
+                
                 <form id="admin-form">
                   <div class="form-group">
-                    <label for="alasan-libur">Alasan Libur/Acara (Wajib diisi):</label>
+                    <label for="alasan-libur"><b>Atur Status Mingguan</b> (Wajib diisi):</label>
                     <input type="text" class="form-control" id="alasan-libur" placeholder="Contoh: Libur Maulid Nabi">
                   </div>
                   <button type="button" id="set-libur-btn" class="btn btn-warning">Set Status Libur/Acara</button>
                   <button type="button" id="revoke-libur-btn" class="btn btn-danger float-right">Cabut Status (Reset ke "-")</button>
                 </form>
-                <hr> <div class="mt-3">
-               <h5>Penampil Sheet (<span id="sheet-name-viewer">-</span>)</h5>
-               <button type="button" id="refresh-sheet-btn" class="btn btn-info btn-sm mb-2">
-                 <span id="refresh-loader" class="spinner-border spinner-border-sm" role="status" style="display: none;"></span>
-                 Tampilkan/Refresh Data Sheet
-               </button>
-               <div id="sheet-viewer-container" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                 <p id="sheet-viewer-placeholder">Klik tombol di atas untuk memuat data...</p>
-                 <table id="sheet-viewer-table" class="table table-bordered table-sm" style="display: none;">
-                   </table>
-               </div>
-             </div>
+                
+                <hr> 
+                
+                <div class="mt-3">
+                   <h5>Penampil Sheet (<span id="sheet-name-viewer">-</span>)</h5>
+                   <button type="button" id="refresh-sheet-btn" class="btn btn-info btn-sm mb-2">
+                     <span id="refresh-loader" class="spinner-border spinner-border-sm" role="status" style="display: none;"></span>
+                     Tampilkan/Refresh Data Sheet
+                   </button>
+                   <div id="sheet-viewer-container" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                     <p id="sheet-viewer-placeholder">Klik tombol di atas untuk memuat data...</p>
+                     <table id="sheet-viewer-table" class="table table-bordered table-sm" style="display: none;">
+                       </table>
+                   </div>
+                </div>
               </div>
             </div>
             
-            <div class="card mb-4"><div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div><div class="card-body"><p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p><div id="monthly-attendance" class="row"></div></div></div>
-            <div class="card"><div class="card-header">10 Riwayat Absensi Terakhir</div><div class="card-body table-responsive"><table class="table table-striped table-sm mb-0"><thead><tr><th>Waktu</th><th>Status</th><th>Keterangan</th></tr></thead><tbody id="history-body"></tbody></table></div></div>
-            <footer id="app-footer" class="footer-custom" style="display: none;"><div class="container"><div class="row justify-content-between"><div class="col-md-5 mb-4"><h5>Robotic Man2Kudus</h5><p style="font-size: 0.9rem;">Sistem Absensi Digital untuk efisiensi dan transparansi pencatatan kehadiran anggota ekstrakurikuler Robotic.</p></div><div class="col-md-auto mb-4"><h5>Navigasi</h5><ul class="list-unstyled"><li><a href="#" onclick="location.reload()">Halaman Utama</a></li></ul></div><div class="col-md-auto mb-4"><h5>Info Kontak</h5><ul class="list-unstyled"><li><a href="https://wa.me/6282327023602" target="_blank" rel="noopener noreferrer">WhatsApp (Seila)</a></li><li><a href="https://www.instagram.com/m2k.robotics/" target="_blank" rel="noopener noreferrer">Instagram</a></li></ul></div></div><hr><div class="text-center pt-2"><p class="mb-0" style="font-size: 0.8rem;">&copy; 2025 Robotic Man2Kudus. All Rights Reserved.</p></div></div></footer>
+            <div class="card mb-4">
+                <div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div>
+                <div class="card-body">
+                    <p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p>
+                    <div id="monthly-attendance" class="row"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">10 Riwayat Absensi Terakhir</div>
+                <div class="card-body table-responsive">
+                    <table class="table table-striped table-sm mb-0">
+                        <thead><tr><th>Waktu</th><th>Status</th><th>Keterangan</th></tr></thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <footer id="app-footer" class="footer-custom" style="display: none;">
+                <div class="container">
+                    <div class="row justify-content-between">
+                        <div class="col-md-5 mb-4"><h5>Robotic Man2Kudus</h5><p style="font-size: 0.9rem;">Sistem Absensi Digital untuk efisiensi dan transparansi pencatatan kehadiran anggota ekstrakurikuler Robotic.</p></div>
+                        <div class="col-md-auto mb-4"><h5>Navigasi</h5><ul class="list-unstyled"><li><a href="#" onclick="location.reload()">Halaman Utama</a></li></ul></div>
+                        <div class="col-md-auto mb-4"><h5>Info Kontak</h5><ul class="list-unstyled"><li><a href="https://wa.me/6282327023602" target="_blank" rel="noopener noreferrer">WhatsApp (Seila)</a></li><li><a href="https://www.instagram.com/m2k.robotics/" target="_blank" rel="noopener noreferrer">Instagram</a></li></ul></div>
+                    </div>
+                    <hr>
+                    <div class="text-center pt-2"><p class="mb-0" style="font-size: 0.8rem;">© 2025 Robotic Man2Kudus. All Rights Reserved.</p></div>
+                </div>
+            </footer>
         </div>
     </div>
-    <div class="modal fade" id="qrModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Scan QR Code Absensi</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body"><div id="qr-reader" style="width: 100%;"></div><div id="qr-result" class="mt-3"></div></div></div></div></div>
-    <div class="modal fade" id="izinModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Form Pengajuan Izin</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body text-left"><form id="izin-form"><div class="form-group"><label for="alasan">1. Tuliskan alasan izin Anda:</label><textarea class="form-control" id="alasan" rows="3" required></textarea></div><div class="form-group"><label>2. Ambil Foto Bukti (Wajib)</label><div id="camera-container" class="text-center"><video id="video-preview" width="100%" style="display: none;"></video><canvas id="photo-canvas" style="display: none;"></canvas><img id="photo-preview" src="" width="100%" style="display: none;" class="mb-2"/><button type="button" id="start-camera-btn" class="btn btn-secondary">Buka Kamera</button><button type="button" id="capture-btn" class="btn btn-primary" style="display: none;">Jepret Foto</button></div></div><button type="submit" class="btn btn-primary mt-3">Kirim Izin</button></form></div></div></div></div>
+
+    <div class="modal fade" id="qrModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Scan QR Code Absensi</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div><div class="modal-body"><div id="qr-reader" style="width: 100%;"></div><div id="qr-result" class="mt-3"></div></div></div></div></div>
+    
+    <div class="modal fade" id="izinModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Form Pengajuan Izin</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div><div class="modal-body text-left"><form id="izin-form"><div class="form-group"><label for="alasan">1. Tuliskan alasan izin Anda:</label><textarea class="form-control" id="alasan" rows="3" required></textarea></div><div class="form-group"><label>2. Ambil Foto Bukti (Wajib)</label><div id="camera-container" class="text-center"><video id="video-preview" width="100%" style="display: none;"></video><canvas id="photo-canvas" style="display: none;"></canvas><img id="photo-preview" src="" width="100%" style="display: none;" class="mb-2"/><button type="button" id="start-camera-btn" class="btn btn-secondary">Buka Kamera</button><button type="button" id="capture-btn" class="btn btn-primary" style="display: none;">Jepret Foto</button></div></div><button type="submit" class="btn btn-primary mt-3">Kirim Izin</button></form></div></div></div></div>
+
+    <div class="modal fade" id="previewModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">Detail Izin</h5></div>
+          <div class="modal-body">
+            <strong>Alasan:</strong>
+            <p id="preview-alasan" class="mb-2"></p>
+            <strong>Bukti Foto:</strong>
+            <img id="preview-image" src="" alt="Memuat bukti..." class="img-fluid rounded mb-2" />
+            <a id="preview-link" href="#" target="_blank" rel="noopener noreferrer">Buka di Google Drive</a>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal fade" id="infoModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 1rem;">
+          <div class="modal-body text-center p-4">
+            <div id="infoModalIcon" class="mb-3">
+              </div>
+            <h4 id="infoModalTitle" class="mb-2"></h4>
+            <p id="infoModalMessage"></p>
+            <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 1rem;">
+          <div class="modal-body p-4">
+            <h4 id="confirmModalTitle">Konfirmasi Tindakan</h4>
+            <p id="confirmModalMessage">Apakah Anda yakin?</p>
+            <div class="d-flex justify-content-end">
+              <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">Batal</button>
+              <button type="button" class="btn btn-danger" id="confirmModalBtn">Konfirmasi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -138,63 +258,57 @@
 
     
     <script>
-    // ===================================
-    // GANTI DENGAN URL API DARI LANGKAH 1
-    // ===================================
-    const API_URL = "/api/gas-proxy";
-
-
-    let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
-    // ... (sisa variabel global)
+    
     // ===================================
     // “RUANG TAMU” / GLOBAL SCOPE
-    // Berisi semua variabel global dan DEFINISI fungsi
     // ===================================
+    
+    const API_URL = "/api/gas-proxy";
+    let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
 
+    // --- Definisi Fungsi Global ---
 
-
-function showDashboard() {
-    document.getElementById('login-view').style.display = 'none';
-    document.getElementById('dashboard-view').style.display = 'block';
-    document.getElementById('app-footer').style.display = 'block';
-    document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
-}
+    function showDashboard() {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        document.getElementById('app-footer').style.display = 'block';
+        document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
+    }
+    
     function updateDashboardUI(data) {
-      const runningTextContainer = document.getElementById('running-text-container');
-      const runningTextContent = document.getElementById('running-text-content');
+        // Update Running Text
+        const runningTextContainer = document.getElementById('running-text-container');
+        const runningTextContent = document.getElementById('running-text-content');
+        if (data.runningText && data.runningText.trim() !== "") {
+          runningTextContent.innerText = data.runningText;
+          runningTextContainer.style.display = 'block';
+        } else {
+          runningTextContainer.style.display = 'none';
+        }
 
-      if (data.runningText && data.runningText.trim() !== "") {
-        runningTextContent.innerText = data.runningText;
-        runningTextContainer.style.display = 'block';
-      } else {
-        runningTextContainer.style.display = 'none';
-      }
+        // Update Dashboard Utama
         if (data.success) {
             document.getElementById('current-month').innerText = data.currentMonth;
             document.getElementById('current-week').innerText = data.currentWeek;
             const statusBadge = document.getElementById('current-status');
             statusBadge.innerText = data.currentStatus;
             statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (data.currentStatus.includes('Libur') || data.currentStatus.includes('Acara')) ? 'badge-primary' : 'badge-danger');
+            
+            // Update Status Mingguan
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
                 let statusClass = ''; // Warna normal (hitam)
-                if (att.status === 'Hadir') {
-                    statusClass = 'text-success'; // Hijau
-                } else if (att.status === 'Izin' || att.status.startsWith('(')) {
-                    // Cek 'Izin' ATAU jika statusnya diawali '(' (dari bukti foto)
-                    statusClass = 'text-warning'; // Kuning
-                } else if (att.status === 'Alpha') {
-                   statusClass = 'text-danger'; // Merah
-                } else if (att.status === '-') {
-                    statusClass = 'text-muted'; // Abu-abu
-                } else if (att.status.includes('Libur') || att.status.includes('Acara')) {
-                    statusClass = 'text-primary'; // Biru
-                }
+                if (att.status === 'Hadir') statusClass = 'text-success';
+                else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
+                else if (att.status === 'Alpha') statusClass = 'text-danger';
+                else if (att.status === '-') statusClass = 'text-muted';
+                else if (att.status.includes('Libur') || att.status.includes('Acara')) statusClass = 'text-primary';
                 
-                // Tampilkan teks status apa adanya
                 monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.status}</span></div>`;
             });
+            
+            // Update Riwayat Absensi
             const historyBody = document.getElementById('history-body');
             historyBody.innerHTML = '';
             if (data.history.length > 0) {
@@ -203,29 +317,31 @@ function showDashboard() {
                     if (log.status === 'Hadir') statusClass = 'badge-success';
                     else if (log.status === 'Izin') statusClass = 'badge-warning';
                     else if (log.status === 'Alpha') statusClass = 'badge-danger';
-                    else if (log.status.includes('Libur') || log.status.includes('Acara')) statusClass = 'badge-primary'; // Biru
+                    else if (log.status.includes('Libur') || log.status.includes('Acara')) statusClass = 'badge-primary';
                     historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
                 });
             } else {
                 historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
             }
         } else {
-            showInfoModal('Gagal memuat data dashboard: ' + data.message);
+            showInfoModal('Gagal Memuat Dashboard', 'Gagal memuat data dashboard: ' + data.message, false);
         }
     }
 
+    // Fungsi handler untuk respon sukses (absen/izin)
     function handleServerResponse(response) {
         if (response.success) {
             $('#qrModal').modal('hide');
             $('#izinModal').modal('hide');
             document.getElementById('izin-form').reset();
-            showInfoModal(response.message); 
-            loadDashboard();
+            showInfoModal("Berhasil", response.message, true); 
+            loadDashboard(); // Refresh data dashboard
         } else {
-            showInfoModal("Gagal: " + response.message);
+            showInfoModal("Gagal", response.message, false);
         }
     }
 
+    // Fungsi utilitas kamera
     function stopCamera() {
         const video = document.getElementById('video-preview');
         const startCameraBtn = document.getElementById('start-camera-btn');
@@ -239,13 +355,14 @@ function showDashboard() {
         captureBtn.style.display = 'none';
     }
 
+    // Fungsi logout
     function logout() {
         localStorage.removeItem('loggedInUser');
         currentUser = null;
         location.reload();
     }
 
-    // fungsi untuk menampilkan modal info
+    // Fungsi modal pop-up (PENGGANTI ALERT)
     function showInfoModal(title, message, isSuccess = false) {
       const iconSuccess = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>';
       const iconError = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="red" class="bi bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/></svg>';
@@ -257,15 +374,9 @@ function showDashboard() {
       $('#infoModal').modal('show');
     }
 
-    // ===================================
-    // ... (di bawah fungsi logout()) ...
-    // ===================================
-
-    // FUNGSI BARU UNTUK MEMUAT / ME-REFRESH DATA DASHBOARD
+    // Fungsi (re)load data dashboard
     async function loadDashboard() {
-      if (!currentUser) return; // Pastikan user ada
-      
-      // Tampilkan "Memuat..." dulu selagi mengambil data
+      if (!currentUser) return;
       document.getElementById('current-status').innerText = 'Memuat...';
       document.getElementById('current-status').className = 'badge badge-secondary';
       document.getElementById('monthly-attendance').innerHTML = '';
@@ -277,23 +388,19 @@ function showDashboard() {
           nama: currentUser.nama,
           kelas: currentUser.kelas
         });
-        updateDashboardUI(dashboardData); // Panggil UI update
+        updateDashboardUI(dashboardData);
       } catch (err) {
         console.error('Gagal memuat dashboard:', err);
-        showInfoModal('Gagal mengambil data dashboard: ' + err.message);
+        showInfoModal('Gagal', 'Gagal mengambil data dashboard: ' + err.message, false);
       }
     }
 
-        // ... [di bawah fungsi loadDashboard()] ...
-
-    // Fungsi baru untuk mendapatkan lokasi (menggunakan Promise)
+    // Fungsi ambil lokasi (GPS)
     function getCurrentPosition() {
       return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
           reject(new Error('Geolocation tidak didukung oleh browser Anda.'));
         } else {
-          // Meminta akurasi tinggi,
-          // dan set timeout 5 detik
           navigator.geolocation.getCurrentPosition(
             (position) => {
               resolve({
@@ -312,50 +419,46 @@ function showDashboard() {
 
     // ===================================
     // “KAMAR KHUSUS” / DOMContentLoaded
-    // Semua kode yang MEMASANG event listener ke elemen HTML ditaruh di sini
+    // Semua event listener ditaruh di sini
     // ===================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Cek login dari session
+        
+        // Cek login dari localStorage
         const loggedInUser = localStorage.getItem('loggedInUser');
         if (loggedInUser) {
             currentUser = JSON.parse(loggedInUser);
             showDashboard();
-            loadDashboard();
-
-            // TAMPILKAN PANEL ADMIN JIKA DIA ADMIN
+            loadDashboard(); // Muat data dashboard
+            // Tampilkan panel admin jika dia admin
             if (currentUser && currentUser.isAdmin) {
               document.getElementById('admin-panel').style.display = 'block';
             }
         }
         
-
-        // Event listener untuk Login
-            document.getElementById('login-form').addEventListener('submit', async function(e) {
+        // Listener Form Login
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
               e.preventDefault();
-            
               const loginButtonText = document.getElementById('login-button-text');
               const loginLoader = document.getElementById('login-loader');
               loginButtonText.style.display = 'none';
               loginLoader.style.display = 'inline-block';
-            
+              
               const nama = document.getElementById('nama').value;
               const password = document.getElementById('password').value;
-            
+              
               try {
                 const result = await postToAPI({
                   action: 'authenticateUser',
                   nama,
                   password
                 });
-            
+                
                 if (result.success) {
-                  // SIMPAN STATUS ADMIN
                   currentUser = { nama: result.nama, kelas: result.kelas, isAdmin: result.isAdmin };
                   localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
                   showDashboard();
                   loadDashboard();
-
-                  // TAMPILKAN PANEL ADMIN JIKA DIA ADMIN
+                  // Tampilkan panel admin JIKA dia admin
                   if (currentUser.isAdmin) {
                     document.getElementById('admin-panel').style.display = 'block';
                   }
@@ -373,21 +476,18 @@ function showDashboard() {
                 loginButtonText.style.display = 'inline-block';
                 loginLoader.style.display = 'none';
               }
+        });
             
-           });
-            
-
-
-        // Event listener untuk Kirim Izin
-            document.getElementById('izin-form').addEventListener('submit', async function(e) {
+        // Listener Form Izin
+        document.getElementById('izin-form').addEventListener('submit', async function(e) {
               e.preventDefault();
               const submitButton = this.querySelector('button[type="submit"]');
               const alasan = document.getElementById('alasan').value;
-              if (!capturedImageData) { showInfoModal('Anda wajib mengambil foto bukti.'); return; }
-            
+              if (!capturedImageData) { showInfoModal('Gagal', 'Anda wajib mengambil foto bukti.', false); return; }
+              
               submitButton.disabled = true;
               submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
-            
+              
               try {
                 const result = await postToAPI({
                   action: 'markIzinFromDashboard',
@@ -399,21 +499,18 @@ function showDashboard() {
                 handleServerResponse(result);
               } catch (error) {
                 console.error('Error submitting izin:', error);
-                showInfoModal("Terjadi kesalahan teknis: " + error.message);
+                showInfoModal("Error", "Terjadi kesalahan teknis: " + error.message, false);
               } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Kirim Izin';
               }
-            });
+        });
             
-            // ... [di dalam DOMContentLoaded] ...
-
         // ===================================
         // EVENT LISTENER PANEL ADMIN
         // ===================================
-        // ===================================
-        // EVENT LISTENER PANEL ADMIN (VERSI BARU DENGAN KONFIRMASI)
-        // ===================================
+        
+        // Listener Tombol Set Libur (dengan konfirmasi)
         document.getElementById('set-libur-btn').addEventListener('click', async function() {
           const alasan = document.getElementById('alasan-libur').value;
           if (!alasan || alasan.trim() === "") {
@@ -421,12 +518,8 @@ function showDashboard() {
             return;
           }
 
-          // --- MODIFIKASI DIMULAI ---
-          // Tampilkan modal konfirmasi, sama kayak tombol 'revoke'
           const confirmBtn = document.getElementById('confirmModalBtn');
           const confirmMsg = document.getElementById('confirmModalMessage');
-
-          // Pesan dinamis berdasarkan inputan admin
           confirmMsg.innerText = `YAKIN ingin mengubah status SEMUA siswa menjadi "${alasan}"? Ini akan menimpa data minggu ini.`;
           $('#confirmModal').modal('show');
           
@@ -444,41 +537,36 @@ function showDashboard() {
             }
           }, 1000);
 
-          // Pasang listener sekali klik
           confirmBtn.onclick = async () => {
             if (confirmBtn.disabled) return;
-            
-            clearInterval(interval); // Hentikan interval jika ada
+            clearInterval(interval);
             $('#confirmModal').modal('hide');
             showInfoModal("Memproses...", "Sedang mengatur status libur, mohon tunggu...", false);
 
             try {
               const result = await postToAPI({
                 action: 'setHolidayStatus',
-                nama: currentUser.nama, // Untuk log admin
-                alasanLibur: alasan // Ambil dari inputan
+                nama: currentUser.nama,
+                alasanLibur: alasan
               });
               
               if (result.success) {
                 showInfoModal("Berhasil", result.message, true);
-                loadDashboard(); // Refresh dashboard
+                loadDashboard();
               } else {
                 showInfoModal("Gagal", result.message, false);
               }
             } catch (err) {
               showInfoModal("Error", err.message, false);
             }
-            
-            // Reset tombol untuk penggunaan berikutnya
-            confirmBtn.onclick = null; // Hapus listener
+            confirmBtn.onclick = null;
           };
-          // --- MODIFIKASI SELESAI ---
         });
 
- document.getElementById('revoke-libur-btn').addEventListener('click', function() {
+        // Listener Tombol Cabut Status (dengan konfirmasi)
+        document.getElementById('revoke-libur-btn').addEventListener('click', function() {
           const confirmBtn = document.getElementById('confirmModalBtn');
           const confirmMsg = document.getElementById('confirmModalMessage');
-
           confirmMsg.innerText = "YAKIN ingin mencabut status? Ini akan me-reset status SEMUA siswa di minggu ini menjadi '-'. Tindakan ini tidak bisa dibatalkan.";
           $('#confirmModal').modal('show');
           
@@ -496,38 +584,32 @@ function showDashboard() {
             }
           }, 1000);
 
-          // Pasang listener sekali klik
           confirmBtn.onclick = async () => {
-            if (confirmBtn.disabled) return; // Jangan lakukan apa-apa jika countdown belum selesai
-            
-            clearInterval(interval); // Hentikan interval jika ada
+            if (confirmBtn.disabled) return;
+            clearInterval(interval);
             $('#confirmModal').modal('hide');
             showInfoModal("Memproses...", "Sedang me-reset status, mohon tunggu...", false);
 
             try {
               const result = await postToAPI({
                 action: 'revokeHolidayStatus',
-                nama: currentUser.nama // Untuk log admin
+                nama: currentUser.nama
               });
 
               if (result.success) {
                 showInfoModal("Berhasil", result.message, true);
-                loadDashboard(); // Refresh dashboard
+                loadDashboard();
               } else {
                 showInfoModal("Gagal", result.message, false);
               }
             } catch (err) {
               showInfoModal("Error", err.message, false);
             }
-            
-            // Reset tombol untuk penggunaan berikutnya
-            confirmBtn.onclick = null; // Hapus listener
+            confirmBtn.onclick = null;
           };
-        }); // <-- INI KURUNG YANG HILANG (FIXED)
+        }); // <-- BUG FIX: KURUNG PENUTUP 'revoke-libur-btn'
 
-// ===================================
-        // EVENT LISTENER PENAMPIL SHEET (VERSI BARU DENGAN UX POLISH)
-        // ===================================
+        // Listener Tombol Refresh Sheet Admin
         document.getElementById('refresh-sheet-btn').addEventListener('click', async function() {
           const btn = this;
           const loader = document.getElementById('refresh-loader');
@@ -535,7 +617,6 @@ function showDashboard() {
           const table = document.getElementById('sheet-viewer-table');
           const sheetNameEl = document.getElementById('sheet-name-viewer');
 
-          // Tampilkan loader
           btn.disabled = true;
           loader.style.display = 'inline-block';
           placeholder.innerText = 'Sedang memuat data...';
@@ -548,16 +629,14 @@ function showDashboard() {
               placeholder.style.display = 'none';
               table.style.display = 'table';
               sheetNameEl.innerText = result.sheetName;
-
-              // Kosongkan tabel lama
               table.innerHTML = ''; 
 
-              // Buat <thead> (Header) - Sesuai Q2 (Skip header)
+              // Buat <thead> (Header)
               const thead = document.createElement('thead');
               thead.className = 'thead-dark';
               const headerRow = document.createElement('tr');
               result.headers.forEach(headerText => {
-                if (!headerText) return; // Skip kolom kosong
+                if (!headerText) return;
                 const th = document.createElement('th');
                 th.scope = 'col';
                 th.innerText = headerText;
@@ -572,43 +651,32 @@ function showDashboard() {
                 const dataRow = document.createElement('tr');
                 rowData.forEach(cellTextRaw => {
                   const td = document.createElement('td');
+                  if (typeof cellTextRaw === 'undefined' || cellTextRaw === null) {
+                    cellTextRaw = ''; // Handle sel kosong
+                  }
                   const cellText = cellTextRaw.toString().trim();
                   
-                  let cellHtml = cellText; // Default
-                  let cellClass = ''; // Default
+                  let cellHtml = cellText;
+                  let cellClass = '';
 
-                  // --- LOGIKA BARU UNTUK WARNA & CLICKABLE ---
-                  
-                  if (cellText === 'Hadir') {
-                    cellClass = 'bg-success text-white';
-                  } 
-                  else if (cellText === 'Alpha') {
-                    cellClass = 'bg-danger text-white';
-                  } 
-                  else if (cellText.includes('Libur') || cellText.includes('Acara')) {
-                    cellClass = 'bg-primary text-white';
-                  } 
+                  // Logika Warna & Clickable
+                  if (cellText === 'Hadir') cellClass = 'bg-success text-white';
+                  else if (cellText === 'Alpha') cellClass = 'bg-danger text-white';
+                  else if (cellText.includes('Libur') || cellText.includes('Acara')) cellClass = 'bg-primary text-white';
                   else if (cellText.startsWith('(') && cellText.includes('https://drive.google.com')) {
                     // Ini adalah status IZIN
-                    cellClass = 'bg-warning'; // Latar kuning
-                    
+                    cellClass = 'bg-warning';
                     try {
-                      // Parsing data izin: (alasan, https://link)
                       const parts = cellText.substring(1, cellText.length - 1).split(',');
-                      const url = parts[parts.length - 1].trim(); // Ambil link
-                      const alasan = parts.slice(0, -1).join(','); // Ambil alasan
+                      const url = parts[parts.length - 1].trim();
+                      const alasan = parts.slice(0, -1).join(',');
                       
-                      // Buat jadi link clickable
                       cellHtml = `<a href="#" class="text-dark" data-toggle="modal" data-target="#previewModal" data-alasan="${alasan.replace(/"/g, '&quot;')}" data-url="${url}">
                                     <strong>Izin</strong>
                                   </a>`;
-
-                    } catch (e) {
-                      cellHtml = 'Izin (Error Parsing)'; // Fallback
-                    }
+                    } catch (e) { cellHtml = 'Izin (Error Parsing)'; }
                   }
-                  // --- AKHIR LOGIKA BARU ---
-
+                  
                   td.className = cellClass;
                   td.innerHTML = cellHtml;
                   dataRow.appendChild(td);
@@ -627,12 +695,12 @@ function showDashboard() {
             placeholder.innerText = 'Error: ' + err.message;
             showInfoModal("Error", err.message, false);
           } finally {
-            // Sembunyikan loader
             btn.disabled = false;
             loader.style.display = 'none';
           }
-        }); // <-- Penutup refresh-sheet-btn
-        // EVENT LISTENER RUNNING TEXT ADMIN
+        }); // <-- BUG FIX: KURUNG PENUTUP 'refresh-sheet-btn'
+
+        // Listener Tombol Set Running Text
         document.getElementById('set-running-text-btn').addEventListener('click', async function() {
           const btn = this;
           const text = document.getElementById('running-text-input').value;
@@ -649,7 +717,6 @@ function showDashboard() {
             
             if (result.success) {
               showInfoModal("Berhasil", "Teks berjalan berhasil diupdate.", true);
-              // Langsung update di halaman admin juga
               const runningTextContainer = document.getElementById('running-text-container');
               const runningTextContent = document.getElementById('running-text-content');
               if (text && text.trim() !== "") {
@@ -667,11 +734,13 @@ function showDashboard() {
             btn.disabled = false;
             btn.innerHTML = 'Set Teks Berjalan';
           }
-        });
+        }); // <-- BUG FIX: KURUNG PENUTUP 'set-running-text-btn'
 
-        // (KURUNG '});' YANG SALAH DI SINI SUDAH DIHAPUS)
+        // ===================================
+        // EVENT LISTENER KAMERA & MODAL
+        // ===================================
 
-        // Event listener untuk Kamera Izin
+        // Listener Kamera Izin
         document.getElementById('start-camera-btn').addEventListener('click', async () => {
             const video = document.getElementById('video-preview');
             const photoPreview = document.getElementById('photo-preview');
@@ -685,9 +754,10 @@ function showDashboard() {
                 startCameraBtn.style.display = 'none';
                 captureBtn.style.display = 'inline-block';
                 video.play();
-            } catch (err) { showInfoModal("Tidak bisa mengakses kamera: " + err); }
+            } catch (err) { showInfoModal("Gagal", "Tidak bisa mengakses kamera: " + err, false); }
         });
 
+        // Listener Tombol Jepret
         document.getElementById('capture-btn').addEventListener('click', () => {
             const video = document.getElementById('video-preview');
             const canvas = document.getElementById('photo-canvas');
@@ -706,73 +776,73 @@ function showDashboard() {
             stopCamera();
         });
 
-        // =======================================================
-        // EVENT LISTENER UNTUK MODAL QR (PEMBUNGKUS BARU)
-        // =======================================================
+        // Listener Modal QR (Saat DIBUKA)
         $('#qrModal').on('show.bs.modal', function (e) {
             html5QrCode = new Html5Qrcode("qr-reader");
             const qrResultElement = document.getElementById('qr-result');
             qrResultElement.innerText = "Arahkan kamera ke QR Code...";
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             
-            // KODE SCANNER KAMU (DARI LINE 407) KITA PINDAH KE DALAM SINI
             const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
                 if (html5QrCode.isScanning) {
                     qrResultElement.innerText = `Scan berhasil! Mendapatkan lokasi Anda...`;
                     
                     try {
-                        // 1. Hentikan kamera dulu
                         await html5QrCode.stop();
-
-                        // 2. Ambil lokasi GPS (INI BAGIAN BARU)
                         const position = await getCurrentPosition(); 
                         qrResultElement.innerText = `Lokasi didapat! Memproses absensi...`;
 
-                        // 3. Kirim data ke API (termasuk lat/lon)
                         const result = await postToAPI({
                           action: 'markHadirViaQR',
                           nama: currentUser.nama,
                           kelas: currentUser.kelas,
                           qrCodeData: decodedText,
-                          latitude: position.latitude,  // <-- DATA BARU
-                          longitude: position.longitude // <-- DATA BARU
+                          latitude: position.latitude,
+                          longitude: position.longitude
                         });
                         
-                        handleServerResponse(result); // Panggil fungsi yang sudah ada
+                        handleServerResponse(result);
 
                     } catch (error) {
-                        // Ini akan menangkap error dari getCurrentPosition() ATAU postToAPI()
                         console.error('Error QR/Location:', error);
-                        showInfoModal("Terjadi kesalahan: " + error.message);
-                        $('#qrModal').modal('hide'); // Tutup modal jika gagal
+                        showInfoModal("Error", "Terjadi kesalahan: " + error.message, false);
+                        $('#qrModal').modal('hide');
                     }
                 }
             };
             
-            // KODE START SCANNER (DARI LINE 436) KITA PINDAH KE DALAM SINI
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
                 .catch(err => {
                     qrResultElement.innerText = "ERROR: Gagal memulai kamera.";
                 });
         });
 
-        // LISTENER HIDE.BS.MODAL (DARI LINE 443) KITA PINDAH KE DALAM SINI
+        // Listener Modal QR (Saat DITUTUP)
         $('#qrModal').on('hide.bs.modal', function (e) {
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.stop();
             }
         });
-        // =======================================================
-        // EVENT LISTENER UNTUK MODAL PREVIEW BUKTI IZIN (BARU)
-        // =======================================================
+        
+        // Listener Modal Izin (Saat DITUTUP)
+        $('#izinModal').on('hide.bs.modal', function(){
+            stopCamera();
+            document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('photo-preview').src = '';
+            capturedImageData = null;
+            document.getElementById('start-camera-btn').innerText = 'Buka Kamera';
+            document.getElementById('izin-form').reset();
+        });
+
+        // Listener Modal Preview Bukti (Saat DIBUKA)
         $('#previewModal').on('show.bs.modal', function (event) {
-          const button = $(event.relatedTarget); // Tombol "Izin" yang diklik
+          const button = $(event.relatedTarget);
           const alasan = button.data('alasan');
           const url = button.data('url');
           
-          // Sulap link GDrive 'view' jadi link 'thumbnail'
           let previewUrl = '';
           try {
+            // Sulap link GDrive jadi link thumbnail
             const fileId = url.split('/d/')[1].split('/')[0];
             previewUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
           } catch (e) {
@@ -787,76 +857,43 @@ function showDashboard() {
 
     }); // <-- Penutup DOMContentLoaded
 
-        async function postToAPI(data) {
-  console.log("Request dikirim ke API:", data); // <== Tambahan
+    // ===================================
+    // FUNGSI API (GLOBAL)
+    // ===================================
+    async function postToAPI(data) {
+      console.log("Request dikirim ke API:", data);
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10 detik timeout
 
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      signal: controller.signal
-    });
-    const text = await res.text();
-    console.log("Respon mentah dari API:", text); // <== Tambahan
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          signal: controller.signal
+        });
+        const text = await res.text();
+        console.log("Respon mentah dari API:", text);
 
-    clearTimeout(timeout);
-    return JSON.parse(text);
-  } catch (err) {
-    clearTimeout(timeout);
-    throw new Error("Server timeout atau koneksi terputus");
-  }
-}
+        clearTimeout(timeout);
+        
+        try {
+          return JSON.parse(text); // Coba parse sebagai JSON
+        } catch (e) {
+          // Jika gagal, berarti error HTML dari server
+          console.error("Gagal parse JSON:", text);
+          throw new Error("Server mengembalikan respon yang tidak valid.");
+        }
+      } catch (err) {
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') {
+          throw new Error("Server timeout atau koneksi terputus");
+        }
+        throw err; // Lempar error lain
+      }
+    }
 
-</script>
-<div class="modal fade" id="previewModal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header"><h5 class="modal-title">Detail Izin</h5></div>
-          <div class="modal-body">
-            <strong>Alasan:</strong>
-            <p id="preview-alasan" class="mb-2"></p>
-            <strong>Bukti Foto:</strong>
-            <img id="preview-image" src="" alt="Memuat bukti..." class="img-fluid rounded mb-2" />
-            <a id="preview-link" href="#" target="_blank" rel="noopener noreferrer">Buka di Google Drive</a>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-          </div>
-        </div>
-      </div>
-    </div>
-<div class="modal fade" id="infoModal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-body text-center p-4">
-            <div id="infoModalIcon" class="mb-3">
-              </div>
-            <h4 id="infoModalTitle" class="mb-2"></h4>
-            <p id="infoModalMessage"></p>
-            <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
-      <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-body p-4">
-            <h4 id="confirmModalTitle">Konfirmasi Tindakan</h4>
-            <p id="confirmModalMessage">Apakah Anda yakin?</p>
-            <div class="d-flex justify-content-end">
-              <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">Batal</button>
-              <button type="button" class="btn btn-danger" id="confirmModalBtn">Konfirmasi</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </script>
 </body>
 </html>
-

@@ -141,7 +141,7 @@ function showDashboard() {
             document.getElementById('current-week').innerText = data.currentWeek;
             const statusBadge = document.getElementById('current-status');
             statusBadge.innerText = data.currentStatus;
-            statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : 'badge-danger');
+            statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (data.currentStatus.includes('Libur') || data.currentStatus.includes('Acara')) ? 'badge-primary' : 'badge-danger');
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
@@ -152,9 +152,11 @@ function showDashboard() {
                     // Cek 'Izin' ATAU jika statusnya diawali '(' (dari bukti foto)
                     statusClass = 'text-warning'; // Kuning
                 } else if (att.status === 'Alpha') {
-                    statusClass = 'text-danger'; // Merah
+                   statusClass = 'text-danger'; // Merah
                 } else if (att.status === '-') {
                     statusClass = 'text-muted'; // Abu-abu
+                } else if (att.status.includes('Libur') || att.status.includes('Acara')) {
+                    statusClass = 'text-primary'; // Biru
                 }
                 
                 // Tampilkan teks status apa adanya
@@ -168,6 +170,7 @@ function showDashboard() {
                     if (log.status === 'Hadir') statusClass = 'badge-success';
                     else if (log.status === 'Izin') statusClass = 'badge-warning';
                     else if (log.status === 'Alpha') statusClass = 'badge-danger';
+                    else if (log.status.includes('Libur') || log.status.includes('Acara')) statusClass = 'badge-primary'; // Biru
                     historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
                 });
             } else {

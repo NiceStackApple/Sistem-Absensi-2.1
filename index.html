@@ -93,6 +93,18 @@
                 font-size: 13px;
             }
         }
+        /* ... [CSS .card kamu] ... */
+
+        /* CSS BARU UNTUK TOMBOL "PILL" MINIMALIS */
+        .btn-pill {
+            border-radius: 50rem; /* Ini yang bikin jadi pill */
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+            font-size: 0.875rem; /* Bikin font-nya minimalis */
+            font-weight: 600;
+        }
+
+        /* ... [CSS tabel #sheet-viewer-table kamu] ... */
 
 
         /* =============================================== */
@@ -705,36 +717,37 @@
                   else if (cellText === 'Alpha') cellClass = 'bg-danger text-white';
                   else if (cellText.includes('Libur') || cellText.includes('Acara')) cellClass = 'bg-primary text-white';
                   else if (cellText.includes('https://drive.google.com')) {
-                // Ini adalah status IZIN
-                cellClass = 'bg-warning'; // Latar kuning
+                    // Ini adalah status IZIN
+                    cellClass = ''; // Biarkan sel-nya putih, JANGAN 'bg-warning'
+                    
+                    try {
+                      // Cek apakah pakai format baru '(alasan, link)'
+                      let textToParse = cellText;
+                      if (cellText.startsWith('(') && cellText.endsWith(')')) {
+                        textToParse = cellText.substring(1, cellText.length - 1); // Hapus kurung
+                      }
 
-                try {
-                  // Cek apakah pakai format baru '(alasan, link)'
-                  let textToParse = cellText;
-                  if (cellText.startsWith('(') && cellText.endsWith(')')) {
-                    textToParse = cellText.substring(1, cellText.length - 1); // Hapus kurung
+                      // Parsing: Ambil elemen terakhir sebagai URL, sisanya sebagai Alasan
+                      const parts = textToParse.split(',');
+                      const url = parts.pop().trim(); // Ambil elemen terakhir (URL)
+                      const alasan = parts.join(','); // Gabung sisanya (Alasan)
+                      
+                      // Cek ulang apa 'url' beneran URL
+                      if (!url.startsWith('https://drive.google.com')) {
+                         throw new Error("Parsing gagal, URL tidak di akhir.");
+                      }
+                      
+                      // === PERUBAHAN UTAMA DI SINI ===
+                      // Buat jadi BUTTON, bukan <a>
+                      cellHtml = `<button type="button" class="btn btn-warning btn-sm btn-pill" data-toggle="modal" data-target="#previewModal" data-alasan="${alasan.replace(/"/g, '"')}" data-url="${url}">
+                                    Izin
+                                  </button>`;
+
+                    } catch (e) {
+                      console.error(e);
+                      cellHtml = 'Izin (Error Parsing)'; // Fallback
+                    }
                   }
-
-                  // Parsing: Ambil elemen terakhir sebagai URL, sisanya sebagai Alasan
-                  const parts = textToParse.split(',');
-                  const url = parts.pop().trim(); // Ambil elemen terakhir (URL)
-                  const alasan = parts.join(','); // Gabung sisanya (Alasan)
-
-                  // Cek ulang apa 'url' beneran URL
-                  if (!url.startsWith('https://drive.google.com')) {
-                     throw new Error("Parsing gagal, URL tidak di akhir.");
-                  }
-
-                  // Buat jadi link clickable
-                  cellHtml = `<a href="#" class="text-dark" data-toggle="modal" data-target="#previewModal" data-alasan="${alasan.replace(/"/g, '"')}" data-url="${url}">
-                                <strong>Izin</strong>
-                              </a>`;
-
-                } catch (e) {
-                  console.error(e);
-                  cellHtml = 'Izin (Error Parsing)'; // Fallback
-                }
-              }
                   
                   td.className = cellClass;
                   td.innerHTML = cellHtml;

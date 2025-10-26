@@ -89,6 +89,7 @@
               <div class="card-header bg-danger text-white">
                 Panel Admin: Atur Status Mingguan
               </div>
+              
               <div class="card-body">
                 <form id="admin-form">
                   <div class="form-group">
@@ -98,10 +99,23 @@
                   <button type="button" id="set-libur-btn" class="btn btn-warning">Set Status Libur/Acara</button>
                   <button type="button" id="revoke-libur-btn" class="btn btn-danger float-right">Cabut Status (Reset ke "-")</button>
                 </form>
+                <hr> <div class="mt-3">
+               <h5>Penampil Sheet (<span id="sheet-name-viewer">-</span>)</h5>
+               <button type="button" id="refresh-sheet-btn" class="btn btn-info btn-sm mb-2">
+                 <span id="refresh-loader" class="spinner-border spinner-border-sm" role="status" style="display: none;"></span>
+                 Tampilkan/Refresh Data Sheet
+               </button>
+               <div id="sheet-viewer-container" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                 <p id="sheet-viewer-placeholder">Klik tombol di atas untuk memuat data...</p>
+                 <table id="sheet-viewer-table" class="table table-bordered table-sm" style="display: none;">
+                   </table>
+               </div>
+             </div>
               </div>
             </div>
+            
             <div class="card mb-4"><div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div><div class="card-body"><p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p><div id="monthly-attendance" class="row"></div></div></div>
-            <div class="card"><div class="card-header">10 Riwayat Absensi Terakhir</div><div class="card-body table-responsive"><table class="table table-striped table-sm mb-0"><thead><tr><th>Waktu</th><th>Status</th><th>Lokasi</th></tr></thead><tbody id="history-body"></tbody></table></div></div>
+            <div class="card"><div class="card-header">10 Riwayat Absensi Terakhir</div><div class="card-body table-responsive"><table class="table table-striped table-sm mb-0"><thead><tr><th>Waktu</th><th>Status</th><th>Keterangan</th></tr></thead><tbody id="history-body"></tbody></table></div></div>
             <footer id="app-footer" class="footer-custom" style="display: none;"><div class="container"><div class="row justify-content-between"><div class="col-md-5 mb-4"><h5>Robotic Man2Kudus</h5><p style="font-size: 0.9rem;">Sistem Absensi Digital untuk efisiensi dan transparansi pencatatan kehadiran anggota ekstrakurikuler Robotic.</p></div><div class="col-md-auto mb-4"><h5>Navigasi</h5><ul class="list-unstyled"><li><a href="#" onclick="location.reload()">Halaman Utama</a></li></ul></div><div class="col-md-auto mb-4"><h5>Info Kontak</h5><ul class="list-unstyled"><li><a href="https://wa.me/6282327023602" target="_blank" rel="noopener noreferrer">WhatsApp (Seila)</a></li><li><a href="https://www.instagram.com/m2k.robotics/" target="_blank" rel="noopener noreferrer">Instagram</a></li></ul></div></div><hr><div class="text-center pt-2"><p class="mb-0" style="font-size: 0.8rem;">&copy; 2025 Robotic Man2Kudus. All Rights Reserved.</p></div></div></footer>
         </div>
     </div>
@@ -377,6 +391,9 @@ function showDashboard() {
         // ===================================
         // EVENT LISTENER PANEL ADMIN
         // ===================================
+        // ===================================
+        // EVENT LISTENER PANEL ADMIN (VERSI BARU DENGAN KONFIRMASI)
+        // ===================================
         document.getElementById('set-libur-btn').addEventListener('click', async function() {
           const alasan = document.getElementById('alasan-libur').value;
           if (!alasan || alasan.trim() === "") {
@@ -384,23 +401,58 @@ function showDashboard() {
             return;
           }
 
-          showInfoModal("Memproses...", "Sedang mengatur status libur, mohon tunggu...", false);
-          try {
-            const result = await postToAPI({
-              action: 'setHolidayStatus',
-              nama: currentUser.nama, // Untuk log admin
-              alasanLibur: alasan
-            });
-            
-            if (result.success) {
-              showInfoModal("Berhasil", result.message, true);
-              loadDashboard(); // Refresh dashboard
-            } else {
-              showInfoModal("Gagal", result.message, false);
+          // --- MODIFIKASI DIMULAI ---
+          // Tampilkan modal konfirmasi, sama kayak tombol 'revoke'
+          const confirmBtn = document.getElementById('confirmModalBtn');
+          const confirmMsg = document.getElementById('confirmModalMessage');
+
+          // Pesan dinamis berdasarkan inputan admin
+          confirmMsg.innerText = `YAKIN ingin mengubah status SEMUA siswa menjadi "${alasan}"? Ini akan menimpa data minggu ini.`;
+          $('#confirmModal').modal('show');
+          
+          let countdown = 10;
+          confirmBtn.disabled = true;
+          confirmBtn.innerText = `Konfirmasi (${countdown})`;
+
+          const interval = setInterval(() => {
+            countdown--;
+            confirmBtn.innerText = `Konfirmasi (${countdown})`;
+            if (countdown <= 0) {
+              clearInterval(interval);
+              confirmBtn.disabled = false;
+              confirmBtn.innerText = 'Konfirmasi';
             }
-          } catch (err) {
-            showInfoModal("Error", err.message, false);
-          }
+          }, 1000);
+
+          // Pasang listener sekali klik
+          confirmBtn.onclick = async () => {
+            if (confirmBtn.disabled) return;
+            
+            clearInterval(interval); // Hentikan interval jika ada
+            $('#confirmModal').modal('hide');
+            showInfoModal("Memproses...", "Sedang mengatur status libur, mohon tunggu...", false);
+
+            try {
+              const result = await postToAPI({
+                action: 'setHolidayStatus',
+                nama: currentUser.nama, // Untuk log admin
+                alasanLibur: alasan // Ambil dari inputan
+              });
+              
+              if (result.success) {
+                showInfoModal("Berhasil", result.message, true);
+                loadDashboard(); // Refresh dashboard
+              } else {
+                showInfoModal("Gagal", result.message, false);
+              }
+            } catch (err) {
+              showInfoModal("Error", err.message, false);
+            }
+            
+            // Reset tombol untuk penggunaan berikutnya
+            confirmBtn.onclick = null; // Hapus listener
+          };
+          // --- MODIFIKASI SELESAI ---
         });
 
         document.getElementById('revoke-libur-btn').addEventListener('click', function() {
@@ -451,7 +503,78 @@ function showDashboard() {
             // Reset tombol untuk penggunaan berikutnya
             confirmBtn.onclick = null; // Hapus listener
           };
+
+                  // ===================================
+        // EVENT LISTENER PENAMPIL SHEET ADMIN
+        // ===================================
+        document.getElementById('refresh-sheet-btn').addEventListener('click', async function() {
+          const btn = this;
+          const loader = document.getElementById('refresh-loader');
+          const placeholder = document.getElementById('sheet-viewer-placeholder');
+          const table = document.getElementById('sheet-viewer-table');
+          const sheetNameEl = document.getElementById('sheet-name-viewer');
+
+          // Tampilkan loader
+          btn.disabled = true;
+          loader.style.display = 'inline-block';
+          placeholder.innerText = 'Sedang memuat data...';
+          table.style.display = 'none';
+
+          try {
+            const result = await postToAPI({ action: 'getMonthlySheetData' });
+
+            if (result.success) {
+              placeholder.style.display = 'none';
+              table.style.display = 'table';
+              sheetNameEl.innerText = result.sheetName;
+
+              // Kosongkan tabel lama
+              table.innerHTML = ''; 
+
+              // Buat <thead> (Header)
+              const thead = document.createElement('thead');
+              thead.className = 'thead-dark'; // Biar keren
+              const headerRow = document.createElement('tr');
+              result.sheetData[0].forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                th.innerText = headerText;
+                headerRow.appendChild(th);
+              });
+              thead.appendChild(headerRow);
+              table.appendChild(thead);
+
+              // Buat <tbody> (Isi Data)
+              const tbody = document.createElement('tbody');
+              // Loop dari baris ke-1 (skip header)
+              for (let i = 1; i < result.sheetData.length; i++) {
+                const dataRow = document.createElement('tr');
+                result.sheetData[i].forEach(cellText => {
+                  const td = document.createElement('td');
+                  td.innerText = cellText;
+                  dataRow.appendChild(td);
+                });
+                tbody.appendChild(dataRow);
+              }
+              table.appendChild(tbody);
+
+            } else {
+              placeholder.style.display = 'block';
+              placeholder.innerText = 'Gagal memuat: ' + result.message;
+              showInfoModal("Gagal", result.message, false);
+            }
+          } catch (err) {
+            placeholder.style.display = 'block';
+            placeholder.innerText = 'Error: ' + err.message;
+            showInfoModal("Error", err.message, false);
+          } finally {
+            // Sembunyikan loader
+            btn.disabled = false;
+            loader.style.display = 'none';
+          }
         });
+
+    });
 
         // Event listener untuk Kamera Izin
         document.getElementById('start-camera-btn').addEventListener('click', async () => {

@@ -47,12 +47,53 @@
 
         /* Border "Biru Putih Robotic" untuk tabel admin */
         #sheet-viewer-table {
-            border: 2px solid #007bff; /* Biru */
-            background-color: #ffffff; /* Putih */
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
         }
+
+        /* Header */
         #sheet-viewer-table th {
-            border-bottom: 2px solid #dee2e6;
+            background-color: #007bff;
+            color: #ffffff;
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.3px;
         }
+
+        /* Isi tabel */
+        #sheet-viewer-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333333;
+            transition: background-color 0.2s ease;
+        }
+
+        /* Hover baris */
+        #sheet-viewer-table tr:hover td {
+            background-color: #f8faff;
+        }
+
+        /* Baris terakhir tanpa border */
+        #sheet-viewer-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Responsive (biar enak di HP juga) */
+        @media (max-width: 768px) {
+            #sheet-viewer-table th, #sheet-viewer-table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+
 
         /* =============================================== */
 
@@ -135,7 +176,7 @@
               <div class="card-body">
                 <form id="running-text-form" class="mb-3">
                    <div class="form-group">
-                     <label for="running-text-input"><b>Teks Berjalan</b> (Kosongkan untuk menghapus):</label>
+                     <label for="running-text-input"><b>Buat pengumuman</b> (Kosongkan untuk menghapus):</label>
                      <input type="text" class="form-control" id="running-text-input" placeholder="Tulis pengumuman di sini...">
                    </div>
                    <button type="button" id="set-running-text-btn" class="btn btn-primary btn-block">Set Teks Berjalan</button>
@@ -663,19 +704,37 @@
                   if (cellText === 'Hadir') cellClass = 'bg-success text-white';
                   else if (cellText === 'Alpha') cellClass = 'bg-danger text-white';
                   else if (cellText.includes('Libur') || cellText.includes('Acara')) cellClass = 'bg-primary text-white';
-                  else if (cellText.startsWith('(') && cellText.includes('https://drive.google.com')) {
-                    // Ini adalah status IZIN
-                    cellClass = 'bg-warning';
-                    try {
-                      const parts = cellText.substring(1, cellText.length - 1).split(',');
-                      const url = parts[parts.length - 1].trim();
-                      const alasan = parts.slice(0, -1).join(',');
-                      
-                      cellHtml = `<a href="#" class="text-dark" data-toggle="modal" data-target="#previewModal" data-alasan="${alasan.replace(/"/g, '&quot;')}" data-url="${url}">
-                                    <strong>Izin</strong>
-                                  </a>`;
-                    } catch (e) { cellHtml = 'Izin (Error Parsing)'; }
+                  else if (cellText.includes('https://drive.google.com')) {
+                // Ini adalah status IZIN
+                cellClass = 'bg-warning'; // Latar kuning
+
+                try {
+                  // Cek apakah pakai format baru '(alasan, link)'
+                  let textToParse = cellText;
+                  if (cellText.startsWith('(') && cellText.endsWith(')')) {
+                    textToParse = cellText.substring(1, cellText.length - 1); // Hapus kurung
                   }
+
+                  // Parsing: Ambil elemen terakhir sebagai URL, sisanya sebagai Alasan
+                  const parts = textToParse.split(',');
+                  const url = parts.pop().trim(); // Ambil elemen terakhir (URL)
+                  const alasan = parts.join(','); // Gabung sisanya (Alasan)
+
+                  // Cek ulang apa 'url' beneran URL
+                  if (!url.startsWith('https://drive.google.com')) {
+                     throw new Error("Parsing gagal, URL tidak di akhir.");
+                  }
+
+                  // Buat jadi link clickable
+                  cellHtml = `<a href="#" class="text-dark" data-toggle="modal" data-target="#previewModal" data-alasan="${alasan.replace(/"/g, '"')}" data-url="${url}">
+                                <strong>Izin</strong>
+                              </a>`;
+
+                } catch (e) {
+                  console.error(e);
+                  cellHtml = 'Izin (Error Parsing)'; // Fallback
+                }
+              }
                   
                   td.className = cellClass;
                   td.innerHTML = cellHtml;

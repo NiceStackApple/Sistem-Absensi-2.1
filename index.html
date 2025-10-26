@@ -84,6 +84,9 @@
         <div id="dashboard-view">
             <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
             <div class="d-flex justify-content-between align-items-center mt-4 mb-3"><h2 id="welcome-message">Selamat Datang, Pengguna!</h2><button class="btn btn-danger" onclick="logout()">Logout</button></div>
+            <div id="running-text-container" class="alert alert-info" style="display: none; font-weight: bold;">
+               <marquee id="running-text-content" behavior="scroll" direction="left"></marquee>
+             </div>
             <div class="card mb-4"><div class="card-header">Menu Aksi</div><div class="card-body text-center"><button class="btn btn-success btn-lg m-2" data-toggle="modal" data-target="#qrModal">Absen Hadir (Scan QR)</button><button class="btn btn-warning btn-lg m-2" data-toggle="modal" data-target="#izinModal">Ajukan Izin</button></div></div>
                 <div id="admin-panel" class="card mb-4" style="display: none; border-color: #dc3545;">
               <div class="card-header bg-danger text-white">
@@ -91,6 +94,13 @@
               </div>
               
               <div class="card-body">
+                <form id="running-text-form" class="mb-3">
+               <div class="form-group">
+                 <label for="running-text-input"><b>Teks Berjalan</b> (Kosongkan untuk menghapus):</label>
+                 <input type="text" class="form-control" id="running-text-input" placeholder="Tulis pengumuman di sini...">
+               </div>
+               <button type="button" id="set-running-text-btn" class="btn btn-primary btn-block">Set Teks Berjalan</button>
+             </form>
                 <form id="admin-form">
                   <div class="form-group">
                     <label for="alasan-libur">Alasan Libur/Acara (Wajib diisi):</label>
@@ -150,6 +160,15 @@ function showDashboard() {
     document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
 }
     function updateDashboardUI(data) {
+      const runningTextContainer = document.getElementById('running-text-container');
+      const runningTextContent = document.getElementById('running-text-content');
+
+      if (data.runningText && data.runningText.trim() !== "") {
+        runningTextContent.innerText = data.runningText;
+        runningTextContainer.style.display = 'block';
+      } else {
+        runningTextContainer.style.display = 'none';
+      }
         if (data.success) {
             document.getElementById('current-month').innerText = data.currentMonth;
             document.getElementById('current-week').innerText = data.currentWeek;
@@ -354,7 +373,8 @@ function showDashboard() {
                 loginButtonText.style.display = 'inline-block';
                 loginLoader.style.display = 'none';
               }
-            });
+            
+           });
             
 
 
@@ -505,8 +525,8 @@ function showDashboard() {
           };
         }); // <-- INI KURUNG YANG HILANG (FIXED)
 
-        // ===================================
-        // EVENT LISTENER PENAMPIL SHEET ADMIN
+// ===================================
+        // EVENT LISTENER PENAMPIL SHEET (VERSI BARU DENGAN UX POLISH)
         // ===================================
         document.getElementById('refresh-sheet-btn').addEventListener('click', async function() {
           const btn = this;
@@ -532,11 +552,12 @@ function showDashboard() {
               // Kosongkan tabel lama
               table.innerHTML = ''; 
 
-              // Buat <thead> (Header)
+              // Buat <thead> (Header) - Sesuai Q2 (Skip header)
               const thead = document.createElement('thead');
-              thead.className = 'thead-dark'; // Biar keren
+              thead.className = 'thead-dark';
               const headerRow = document.createElement('tr');
-              result.sheetData[0].forEach(headerText => {
+              result.headers.forEach(headerText => {
+                if (!headerText) return; // Skip kolom kosong
                 const th = document.createElement('th');
                 th.scope = 'col';
                 th.innerText = headerText;
@@ -547,16 +568,53 @@ function showDashboard() {
 
               // Buat <tbody> (Isi Data)
               const tbody = document.createElement('tbody');
-              // Loop dari baris ke-1 (skip header)
-              for (let i = 1; i < result.sheetData.length; i++) {
+              result.studentData.forEach(rowData => {
                 const dataRow = document.createElement('tr');
-                result.sheetData[i].forEach(cellText => {
+                rowData.forEach(cellTextRaw => {
                   const td = document.createElement('td');
-                  td.innerText = cellText;
+                  const cellText = cellTextRaw.toString().trim();
+                  
+                  let cellHtml = cellText; // Default
+                  let cellClass = ''; // Default
+
+                  // --- LOGIKA BARU UNTUK WARNA & CLICKABLE ---
+                  
+                  if (cellText === 'Hadir') {
+                    cellClass = 'bg-success text-white';
+                  } 
+                  else if (cellText === 'Alpha') {
+                    cellClass = 'bg-danger text-white';
+                  } 
+                  else if (cellText.includes('Libur') || cellText.includes('Acara')) {
+                    cellClass = 'bg-primary text-white';
+                  } 
+                  else if (cellText.startsWith('(') && cellText.includes('https://drive.google.com')) {
+                    // Ini adalah status IZIN
+                    cellClass = 'bg-warning'; // Latar kuning
+                    
+                    try {
+                      // Parsing data izin: (alasan, https://link)
+                      const parts = cellText.substring(1, cellText.length - 1).split(',');
+                      const url = parts[parts.length - 1].trim(); // Ambil link
+                      const alasan = parts.slice(0, -1).join(','); // Ambil alasan
+                      
+                      // Buat jadi link clickable
+                      cellHtml = `<a href="#" class="text-dark" data-toggle="modal" data-target="#previewModal" data-alasan="${alasan.replace(/"/g, '&quot;')}" data-url="${url}">
+                                    <strong>Izin</strong>
+                                  </a>`;
+
+                    } catch (e) {
+                      cellHtml = 'Izin (Error Parsing)'; // Fallback
+                    }
+                  }
+                  // --- AKHIR LOGIKA BARU ---
+
+                  td.className = cellClass;
+                  td.innerHTML = cellHtml;
                   dataRow.appendChild(td);
                 });
                 tbody.appendChild(dataRow);
-              }
+              });
               table.appendChild(tbody);
 
             } else {
@@ -572,6 +630,42 @@ function showDashboard() {
             // Sembunyikan loader
             btn.disabled = false;
             loader.style.display = 'none';
+          }
+        }); // <-- Penutup refresh-sheet-btn
+        // EVENT LISTENER RUNNING TEXT ADMIN
+        document.getElementById('set-running-text-btn').addEventListener('click', async function() {
+          const btn = this;
+          const text = document.getElementById('running-text-input').value;
+          
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+          
+          try {
+            const result = await postToAPI({
+              action: "setRunningText",
+              nama: currentUser.nama,
+              text: text
+            });
+            
+            if (result.success) {
+              showInfoModal("Berhasil", "Teks berjalan berhasil diupdate.", true);
+              // Langsung update di halaman admin juga
+              const runningTextContainer = document.getElementById('running-text-container');
+              const runningTextContent = document.getElementById('running-text-content');
+              if (text && text.trim() !== "") {
+                runningTextContent.innerText = text;
+                runningTextContainer.style.display = 'block';
+              } else {
+                runningTextContainer.style.display = 'none';
+              }
+            } else {
+              showInfoModal("Gagal", result.message, false);
+            }
+          } catch (err) {
+            showInfoModal("Error", err.message, false);
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Set Teks Berjalan';
           }
         });
 
@@ -668,8 +762,30 @@ function showDashboard() {
                 html5QrCode.stop();
             }
         });
+        // =======================================================
+        // EVENT LISTENER UNTUK MODAL PREVIEW BUKTI IZIN (BARU)
+        // =======================================================
+        $('#previewModal').on('show.bs.modal', function (event) {
+          const button = $(event.relatedTarget); // Tombol "Izin" yang diklik
+          const alasan = button.data('alasan');
+          const url = button.data('url');
+          
+          // Sulap link GDrive 'view' jadi link 'thumbnail'
+          let previewUrl = '';
+          try {
+            const fileId = url.split('/d/')[1].split('/')[0];
+            previewUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+          } catch (e) {
+            previewUrl = ''; // Gagal ekstrak ID
+          }
 
-    }); // <-- INI PENUTUP 'DOMContentLoaded' YANG BENAR
+          const modal = $(this);
+          modal.find('#preview-alasan').text(alasan || '(Tidak ada alasan)');
+          modal.find('#preview-image').attr('src', previewUrl);
+          modal.find('#preview-link').attr('href', url);
+        });
+
+    }); // <-- Penutup DOMContentLoaded
 
         async function postToAPI(data) {
   console.log("Request dikirim ke API:", data); // <== Tambahan
@@ -696,6 +812,23 @@ function showDashboard() {
 }
 
 </script>
+<div class="modal fade" id="previewModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">Detail Izin</h5></div>
+          <div class="modal-body">
+            <strong>Alasan:</strong>
+            <p id="preview-alasan" class="mb-2"></p>
+            <strong>Bukti Foto:</strong>
+            <img id="preview-image" src="" alt="Memuat bukti..." class="img-fluid rounded mb-2" />
+            <a id="preview-link" href="#" target="_blank" rel="noopener noreferrer">Buka di Google Drive</a>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </div>
 <div class="modal fade" id="infoModal" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -726,14 +859,4 @@ function showDashboard() {
     </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
 

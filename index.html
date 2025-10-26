@@ -455,7 +455,7 @@ function showDashboard() {
           // --- MODIFIKASI SELESAI ---
         });
 
-        document.getElementById('revoke-libur-btn').addEventListener('click', function() {
+ document.getElementById('revoke-libur-btn').addEventListener('click', function() {
           const confirmBtn = document.getElementById('confirmModalBtn');
           const confirmMsg = document.getElementById('confirmModalMessage');
 
@@ -503,8 +503,9 @@ function showDashboard() {
             // Reset tombol untuk penggunaan berikutnya
             confirmBtn.onclick = null; // Hapus listener
           };
+        }); // <-- INI KURUNG YANG HILANG (FIXED)
 
-                  // ===================================
+        // ===================================
         // EVENT LISTENER PENAMPIL SHEET ADMIN
         // ===================================
         document.getElementById('refresh-sheet-btn').addEventListener('click', async function() {
@@ -574,7 +575,7 @@ function showDashboard() {
           }
         });
 
-    });
+        // (KURUNG '});' YANG SALAH DI SINI SUDAH DIHAPUS)
 
         // Event listener untuk Kamera Izin
         document.getElementById('start-camera-btn').addEventListener('click', async () => {
@@ -668,7 +669,7 @@ function showDashboard() {
             }
         });
 
-    }); // <-- INI ADALAH PENUTUP ASLI DARI DOMContentLoaded (DARI LINE 441)
+    }); // <-- INI PENUTUP 'DOMContentLoaded' YANG BENAR
 
         async function postToAPI(data) {
   console.log("Request dikirim ke API:", data); // <== Tambahan

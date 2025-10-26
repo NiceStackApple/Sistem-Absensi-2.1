@@ -85,6 +85,21 @@
             <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
             <div class="d-flex justify-content-between align-items-center mt-4 mb-3"><h2 id="welcome-message">Selamat Datang, Pengguna!</h2><button class="btn btn-danger" onclick="logout()">Logout</button></div>
             <div class="card mb-4"><div class="card-header">Menu Aksi</div><div class="card-body text-center"><button class="btn btn-success btn-lg m-2" data-toggle="modal" data-target="#qrModal">Absen Hadir (Scan QR)</button><button class="btn btn-warning btn-lg m-2" data-toggle="modal" data-target="#izinModal">Ajukan Izin</button></div></div>
+                <div id="admin-panel" class="card mb-4" style="display: none; border-color: #dc3545;">
+              <div class="card-header bg-danger text-white">
+                Panel Admin: Atur Status Mingguan
+              </div>
+              <div class="card-body">
+                <form id="admin-form">
+                  <div class="form-group">
+                    <label for="alasan-libur">Alasan Libur/Acara (Wajib diisi):</label>
+                    <input type="text" class="form-control" id="alasan-libur" placeholder="Contoh: Libur Maulid Nabi">
+                  </div>
+                  <button type="button" id="set-libur-btn" class="btn btn-warning">Set Status Libur/Acara</button>
+                  <button type="button" id="revoke-libur-btn" class="btn btn-danger float-right">Cabut Status (Reset ke "-")</button>
+                </form>
+              </div>
+            </div>
             <div class="card mb-4"><div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div><div class="card-body"><p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p><div id="monthly-attendance" class="row"></div></div></div>
             <div class="card"><div class="card-header">10 Riwayat Absensi Terakhir</div><div class="card-body table-responsive"><table class="table table-striped table-sm mb-0"><thead><tr><th>Waktu</th><th>Status</th><th>Lokasi</th></tr></thead><tbody id="history-body"></tbody></table></div></div>
             <footer id="app-footer" class="footer-custom" style="display: none;"><div class="container"><div class="row justify-content-between"><div class="col-md-5 mb-4"><h5>Robotic Man2Kudus</h5><p style="font-size: 0.9rem;">Sistem Absensi Digital untuk efisiensi dan transparansi pencatatan kehadiran anggota ekstrakurikuler Robotic.</p></div><div class="col-md-auto mb-4"><h5>Navigasi</h5><ul class="list-unstyled"><li><a href="#" onclick="location.reload()">Halaman Utama</a></li></ul></div><div class="col-md-auto mb-4"><h5>Info Kontak</h5><ul class="list-unstyled"><li><a href="https://wa.me/6282327023602" target="_blank" rel="noopener noreferrer">WhatsApp (Seila)</a></li><li><a href="https://www.instagram.com/m2k.robotics/" target="_blank" rel="noopener noreferrer">Instagram</a></li></ul></div></div><hr><div class="text-center pt-2"><p class="mb-0" style="font-size: 0.8rem;">&copy; 2025 Robotic Man2Kudus. All Rights Reserved.</p></div></div></footer>
@@ -96,6 +111,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     
     <script>
     // ===================================
@@ -158,7 +174,7 @@ function showDashboard() {
                 historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
             }
         } else {
-            alert('Gagal memuat data dashboard: ' + data.message);
+            showInfoModal('Gagal memuat data dashboard: ' + data.message);
         }
     }
 
@@ -167,10 +183,10 @@ function showDashboard() {
             $('#qrModal').modal('hide');
             $('#izinModal').modal('hide');
             document.getElementById('izin-form').reset();
-            alert(response.message); 
+            showInfoModal(response.message); 
             loadDashboard();
         } else {
-            alert("Gagal: " + response.message);
+            showInfoModal("Gagal: " + response.message);
         }
     }
 
@@ -191,6 +207,18 @@ function showDashboard() {
         localStorage.removeItem('loggedInUser');
         currentUser = null;
         location.reload();
+    }
+
+    // fungsi untuk menampilkan modal info
+    function showInfoModal(title, message, isSuccess = false) {
+      const iconSuccess = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>';
+      const iconError = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="red" class="bi bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/></svg>';
+      
+      document.getElementById('infoModalTitle').innerText = title;
+      document.getElementById('infoModalMessage').innerText = message;
+      document.getElementById('infoModalIcon').innerHTML = isSuccess ? iconSuccess : iconError;
+      
+      $('#infoModal').modal('show');
     }
 
     // ===================================
@@ -216,7 +244,7 @@ function showDashboard() {
         updateDashboardUI(dashboardData); // Panggil UI update
       } catch (err) {
         console.error('Gagal memuat dashboard:', err);
-        alert('Gagal mengambil data dashboard: ' + err.message);
+        showInfoModal('Gagal mengambil data dashboard: ' + err.message);
       }
     }
 
@@ -256,7 +284,12 @@ function showDashboard() {
         if (loggedInUser) {
             currentUser = JSON.parse(loggedInUser);
             showDashboard();
-            loadDashboard(); // <--- TAMBAHKAN INI (FIX BUG "MEMUAT...")
+            loadDashboard();
+
+            // TAMPILKAN PANEL ADMIN JIKA DIA ADMIN
+            if (currentUser && currentUser.isAdmin) {
+              document.getElementById('admin-panel').style.display = 'block';
+            }
         }
         
 
@@ -280,10 +313,16 @@ function showDashboard() {
                 });
             
                 if (result.success) {
-                  currentUser = { nama: result.nama, kelas: result.kelas };
+                  // SIMPAN STATUS ADMIN
+                  currentUser = { nama: result.nama, kelas: result.kelas, isAdmin: result.isAdmin };
                   localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
                   showDashboard();
                   loadDashboard();
+
+                  // TAMPILKAN PANEL ADMIN JIKA DIA ADMIN
+                  if (currentUser.isAdmin) {
+                    document.getElementById('admin-panel').style.display = 'block';
+                  }
                 } else {
                   const errorMessage = document.getElementById('error-message');
                   errorMessage.innerText = result.message || 'Login gagal.';
@@ -307,7 +346,7 @@ function showDashboard() {
               e.preventDefault();
               const submitButton = this.querySelector('button[type="submit"]');
               const alasan = document.getElementById('alasan').value;
-              if (!capturedImageData) { alert('Anda wajib mengambil foto bukti.'); return; }
+              if (!capturedImageData) { showInfoModal('Anda wajib mengambil foto bukti.'); return; }
             
               submitButton.disabled = true;
               submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
@@ -323,15 +362,93 @@ function showDashboard() {
                 handleServerResponse(result);
               } catch (error) {
                 console.error('Error submitting izin:', error);
-                alert("Terjadi kesalahan teknis: " + error.message);
+                showInfoModal("Terjadi kesalahan teknis: " + error.message);
               } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Kirim Izin';
               }
             });
             
+            // ... [di dalam DOMContentLoaded] ...
 
+        // ===================================
+        // EVENT LISTENER PANEL ADMIN
+        // ===================================
+        document.getElementById('set-libur-btn').addEventListener('click', async function() {
+          const alasan = document.getElementById('alasan-libur').value;
+          if (!alasan || alasan.trim() === "") {
+            showInfoModal("Gagal", "Alasan libur/acara tidak boleh kosong.", false);
+            return;
+          }
 
+          showInfoModal("Memproses...", "Sedang mengatur status libur, mohon tunggu...", false);
+          try {
+            const result = await postToAPI({
+              action: 'setHolidayStatus',
+              nama: currentUser.nama, // Untuk log admin
+              alasanLibur: alasan
+            });
+            
+            if (result.success) {
+              showInfoModal("Berhasil", result.message, true);
+              loadDashboard(); // Refresh dashboard
+            } else {
+              showInfoModal("Gagal", result.message, false);
+            }
+          } catch (err) {
+            showInfoModal("Error", err.message, false);
+          }
+        });
+
+        document.getElementById('revoke-libur-btn').addEventListener('click', function() {
+          const confirmBtn = document.getElementById('confirmModalBtn');
+          const confirmMsg = document.getElementById('confirmModalMessage');
+
+          confirmMsg.innerText = "YAKIN ingin mencabut status? Ini akan me-reset status SEMUA siswa di minggu ini menjadi '-'. Tindakan ini tidak bisa dibatalkan.";
+          $('#confirmModal').modal('show');
+          
+          let countdown = 10;
+          confirmBtn.disabled = true;
+          confirmBtn.innerText = `Konfirmasi (${countdown})`;
+
+          const interval = setInterval(() => {
+            countdown--;
+            confirmBtn.innerText = `Konfirmasi (${countdown})`;
+            if (countdown <= 0) {
+              clearInterval(interval);
+              confirmBtn.disabled = false;
+              confirmBtn.innerText = 'Konfirmasi';
+            }
+          }, 1000);
+
+          // Pasang listener sekali klik
+          confirmBtn.onclick = async () => {
+            if (confirmBtn.disabled) return; // Jangan lakukan apa-apa jika countdown belum selesai
+            
+            clearInterval(interval); // Hentikan interval jika ada
+            $('#confirmModal').modal('hide');
+            showInfoModal("Memproses...", "Sedang me-reset status, mohon tunggu...", false);
+
+            try {
+              const result = await postToAPI({
+                action: 'revokeHolidayStatus',
+                nama: currentUser.nama // Untuk log admin
+              });
+
+              if (result.success) {
+                showInfoModal("Berhasil", result.message, true);
+                loadDashboard(); // Refresh dashboard
+              } else {
+                showInfoModal("Gagal", result.message, false);
+              }
+            } catch (err) {
+              showInfoModal("Error", err.message, false);
+            }
+            
+            // Reset tombol untuk penggunaan berikutnya
+            confirmBtn.onclick = null; // Hapus listener
+          };
+        });
 
         // Event listener untuk Kamera Izin
         document.getElementById('start-camera-btn').addEventListener('click', async () => {
@@ -347,7 +464,7 @@ function showDashboard() {
                 startCameraBtn.style.display = 'none';
                 captureBtn.style.display = 'inline-block';
                 video.play();
-            } catch (err) { alert("Tidak bisa mengakses kamera: " + err); }
+            } catch (err) { showInfoModal("Tidak bisa mengakses kamera: " + err); }
         });
 
         document.getElementById('capture-btn').addEventListener('click', () => {
@@ -405,7 +522,7 @@ function showDashboard() {
                     } catch (error) {
                         // Ini akan menangkap error dari getCurrentPosition() ATAU postToAPI()
                         console.error('Error QR/Location:', error);
-                        alert("Terjadi kesalahan: " + error.message);
+                        showInfoModal("Terjadi kesalahan: " + error.message);
                         $('#qrModal').modal('hide'); // Tutup modal jika gagal
                     }
                 }
@@ -452,9 +569,36 @@ function showDashboard() {
 }
 
 </script>
+<div class="modal fade" id="infoModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-body text-center p-4">
+            <div id="infoModalIcon" class="mb-3">
+              </div>
+            <h4 id="infoModalTitle" class="mb-2"></h4>
+            <p id="infoModalMessage"></p>
+            <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-body p-4">
+            <h4 id="confirmModalTitle">Konfirmasi Tindakan</h4>
+            <p id="confirmModalMessage">Apakah Anda yakin?</p>
+            <div class="d-flex justify-content-end">
+              <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">Batal</button>
+              <button type="button" class="btn btn-danger" id="confirmModalBtn">Konfirmasi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html>
-
 
 
 

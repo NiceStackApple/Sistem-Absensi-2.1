@@ -724,9 +724,9 @@
                   else if (cellText === 'Alpha') {
                     btnClass = 'btn-danger';
                   }
-                  else if (cellText.includes('Libur', 'Acara')) { // Hanya cek 'Libur'
+                  else if (cellText.toLowerCase().includes('Libur') || cellText.toLowerCase().includes('Acara')) { // Cek 'Libur' ATAU 'Acara'
                     btnClass = 'btn-primary';
-                    displayText = 'Libur';
+                    displayText = 'Libur/Acara'; // Teks tombolnya tetap 'Libur' (sesuai requestmu)
                   }
                   else if (cellText.includes('https://drive.google.com')) {
                     // Ini adalah status IZIN

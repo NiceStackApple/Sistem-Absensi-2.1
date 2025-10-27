@@ -187,7 +187,17 @@
                 <form id="admin-form">
                   <div class="form-group">
                     <label for="alasan-libur"><b>Atur Status Libur Mingguan</b> (Wajib diisi):</label>
-                    <input type="text" class="form-control" id="alasan-libur" placeholder="Contoh: Libur Hari Santri">
+                    <input type="text" class="form-control" id="alasan-libur" placeholder="Contoh: Libur Hari Santri (Pastikan ada kata 'Libur' atau 'Acara')" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="target-week"><b>Set status untuk minggu ke:</b></label>
+                    <select class="form-control" id="target-week" required>
+                      <option value="1">Minggu 1</option>
+                      <option value="2">Minggu 2</option>
+                      <option value="3">Minggu 3</option>
+                      <option value="4">Minggu 4</option>
+                      <option value="5">Minggu 5</option>
+                    </select>
                   </div>
                   <button type="button" id="set-libur-btn" class="btn btn-warning">Set Status Libur</button>
                   <button type="button" id="revoke-libur-btn" class="btn btn-danger float-right">Cabut Status (Reset ke "-")</button>
@@ -602,10 +612,13 @@
             showInfoModal("Memproses...", "Sedang mengatur status libur, mohon tunggu...", false);
 
             try {
+              // Ambil nilai minggu dari dropdown
+              const targetWeekValue = document.getElementById('target-week').value;
               const result = await postToAPI({
                 action: 'setHolidayStatus',
                 nama: currentUser.nama,
-                alasanLibur: alasan
+                alasanLibur: alasan,
+                targetWeek: targetWeekValue // <-- Tambah ini
               });
 
               if (result.success) {
@@ -649,9 +662,12 @@
             showInfoModal("Memproses...", "Sedang me-reset status, mohon tunggu...", false);
 
             try {
+              // Ambil nilai minggu dari dropdown (penting!)
+              const targetWeekValue = document.getElementById('target-week').value;
               const result = await postToAPI({
                 action: 'revokeHolidayStatus',
-                nama: currentUser.nama
+                nama: currentUser.nama,
+                targetWeek: targetWeekValue // <-- Tambah ini
               });
 
               if (result.success) {

@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwypLNxuSXn51VR9iI058P3IC1pUIOwl3NulYCYaUdT9ORRJUxNUDWog118pYhea0QC/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyvn-9046lHXu3S100HmlcHisio7Rp2Ha6HL3e09I1LUyEt1URWIak0hmuZxgq8Wswm/exec";
 
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");

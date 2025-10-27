@@ -58,6 +58,23 @@
             display: inline-block; /* Agar width-nya pas */
             min-width: 60px; /* Lebar minimum biar nggak aneh */
         }
+        /* CSS BARU UNTUK GRID STATUS MINGGUAN */
+        #monthly-attendance {
+            display: flex; /* Aktifkan Flexbox */
+            flex-wrap: wrap; /* Biar bisa turun baris */
+            gap: 10px; /* Jarak antar kotak */
+            padding-left: 15px; /* Biar rata kiri */
+            padding-right: 15px;
+        }
+        .week-status-item {
+            background-color: #e9ecef; /* Background abu-abu muda */
+            padding: 8px 12px;
+            border-radius: 0.5rem; /* Sudut tumpul */
+            font-size: 0.9rem;
+            flex-grow: 1; /* Biar lebarnya fleksibel */
+            text-align: center; /* Teks di tengah */
+            min-width: 120px; /* Lebar minimum per kotak */
+        }
 
         /* Style Tabel Admin (Clean) */
         #sheet-viewer-table {
@@ -365,15 +382,25 @@
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
-                let statusClass = ''; // Warna normal (hitam)
-                if (att.status === 'Hadir') statusClass = 'text-success';
-                else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
-                else if (att.status === 'Alpha') statusClass = 'text-danger';
-                else if (att.status === '-') statusClass = 'text-muted';
-                else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
+           // Tampilkan HANYA jika statusnya bukan "-"
+           if (att.status !== '-') {
+               let statusClass = ''; // Reset class warna
+               // Logika warna Teks (bukan background lagi)
+               if (att.status === 'Hadir') statusClass = 'text-success';
+               else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
+               else if (att.status === 'Alpha') statusClass = 'text-danger';
+               else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
+               else statusClass = 'text-dark'; // Warna default jika bukan di atas
 
-                monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.status}</span></div>`;
-            });
+               // Buat elemen div baru untuk tiap minggu
+               monthlyDiv.innerHTML += `
+                   <div class="week-status-item">
+                       <strong>${att.week}:</strong> 
+                       <span class="${statusClass}">${att.status}</span>
+                   </div>
+               `;
+           }
+       });
 
             // Update Riwayat Absensi
             const historyBody = document.getElementById('history-body');

@@ -346,6 +346,8 @@
             const statusBadge = document.getElementById('current-status');
             statusBadge.innerText = data.currentStatus;
             // Update warna badge (hapus 'Acara')
+            // Tampilkan "Libur" jika statusnya mengandung "Libur"
+            statusBadge.innerText = data.currentStatus.includes('Libur') ? 'Libur' : data.currentStatus;
             statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (data.currentStatus.includes('Libur')) ? 'badge-primary' : 'badge-danger');
 
             // Update Status Mingguan
@@ -372,7 +374,7 @@
                     else if (log.status === 'Izin') statusClass = 'badge-warning';
                     else if (log.status === 'Alpha') statusClass = 'badge-danger';
                     else if (log.status.includes('Libur')) statusClass = 'badge-primary'; // Hapus 'Acara'
-                    historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
+                    historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${log.status.includes('Libur') ? 'Libur' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
                 });
             } else {
                 historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';

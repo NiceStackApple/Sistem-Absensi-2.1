@@ -347,9 +347,10 @@
             statusBadge.innerText = data.currentStatus;
             // Update warna badge (hapus 'Acara')
             // Tampilkan "Libur" jika statusnya mengandung "Libur"
-            statusBadge.innerText = data.currentStatus.includes('Libur') ? 'Libur' : data.currentStatus;
-            statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (data.currentStatus.includes('Libur')) ? 'badge-primary' : 'badge-danger');
-
+            // Tampilkan "Libur/Acara" jika statusnya mengandung "libur" atau "acara"
+            const currentStatusLower = data.currentStatus.toLowerCase();
+            statusBadge.innerText = (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'Libur/Acara' : data.currentStatus;
+            statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'badge-primary' : 'badge-danger');
             // Update Status Mingguan
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
@@ -359,7 +360,7 @@
                 else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
                 else if (att.status === 'Alpha') statusClass = 'text-danger';
                 else if (att.status === '-') statusClass = 'text-muted';
-                else if (att.status.includes('Libur')) statusClass = 'text-primary'; // Hapus 'Acara'
+                else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
 
                 monthlyDiv.innerHTML += `<div class="col-md-3 col-6 mb-2"><strong>${att.week}:</strong> <span class="${statusClass}">${att.status}</span></div>`;
             });
@@ -373,8 +374,9 @@
                     if (log.status === 'Hadir') statusClass = 'badge-success';
                     else if (log.status === 'Izin') statusClass = 'badge-warning';
                     else if (log.status === 'Alpha') statusClass = 'badge-danger';
-                    else if (log.status.includes('Libur')) statusClass = 'badge-primary'; // Hapus 'Acara'
-                    historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${log.status.includes('Libur') ? 'Libur' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
+                    else if (log.status.toLowerCase().includes('libur') || log.status.toLowerCase().includes('acara')) statusClass = 'badge-primary';
+                    const logStatusLower = log.status.toLowerCase();
+                    historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${(logStatusLower.includes('libur') || logStatusLower.includes('acara')) ? 'Libur/Acara' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
                 });
             } else {
                 historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
@@ -724,9 +726,9 @@
                   else if (cellText === 'Alpha') {
                     btnClass = 'btn-danger';
                   }
-                  else if (cellText.toLowerCase().includes('Libur') || cellText.toLowerCase().includes('Acara')) { // Cek 'Libur' ATAU 'Acara'
+                  else if (cellText.toLowerCase().includes('libur') || cellText.toLowerCase().includes('acara')) {
                     btnClass = 'btn-primary';
-                    displayText = 'Libur/Acara'; // Teks tombolnya tetap 'Libur' (sesuai requestmu)
+                    displayText = 'Libur/Acara';
                   }
                   else if (cellText.includes('https://drive.google.com')) {
                     // Ini adalah status IZIN
@@ -971,7 +973,7 @@
 
           if (detail === 'Hadir') detailTextEl.addClass('text-success');
           else if (detail === 'Alpha') detailTextEl.addClass('text-danger');
-          else if (detail.includes('Libur')) detailTextEl.addClass('text-primary');
+          else if (detail.toLowerCase().includes('libur') || detail.toLowerCase().includes('acara')) detailTextEl.addClass('text-primary');
           else detailTextEl.addClass('text-secondary'); // Default
 
         });

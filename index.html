@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@^1.0.0/dist/dotlottie-wc.js" type="module"></script>
 
     <style>
         /* =============================================== */
@@ -199,6 +200,14 @@
             <div id="running-text-container" class="alert alert-info running-text-wrapper" style="display: none; font-weight: bold; border-radius: 0.5rem; padding-top: 0.8rem; padding-bottom: 0.8rem; overflow: hidden; white-space: nowrap;">
               <span id="running-text-content" class="running-text-content"></span> </div>
             
+              <div id="streak-container" class="text-center mb-4" style="display: none;">
+                <div id="streak-animation">
+                    <dotlottie-wc id="streak-level-1" src="https://lottie.host/fa4cda5b-9fad-4fe5-a0d2-684a9511be50/iSZVq0i9Es.lottie" style="width: 150px; height: 150px; display: none; margin: -20px auto -30px auto;" autoplay loop></dotlottie-wc>
+                    <dotlottie-wc id="streak-level-2" src="https://lottie.host/5c7aa082-e1c9-48c0-9f7f-f44715fd623a/gA7S2uW1fh.lottie" style="width: 150px; height: 150px; display: none; margin: -20px auto -30px auto;" autoplay loop></dotlottie-wc>
+                    <dotlottie-wc id="streak-level-3" src="https://lottie.host/0852df83-1f88-4bea-ba1f-b543c97d4c6d/ghOnr8XNcu.lottie" style="width: 150px; height: 150px; display: none; margin: -20px auto -30px auto;" autoplay loop></dotlottie-wc>
+                </div>
+                <h5 id="streak-text" style="font-weight: bold;"></h5>
+            </div>
 
             <div class="card mb-4">
                 <div class="card-header">Menu Aksi</div>
@@ -423,6 +432,36 @@
         } else {
           announcementContainer.style.display = 'none';
         }
+
+        // --- KODE BARU UNTUK UPDATE STREAK ---
+        const streakContainer = document.getElementById('streak-container');
+        const streakText = document.getElementById('streak-text');
+        const streakAnim1 = document.getElementById('streak-level-1');
+        const streakAnim2 = document.getElementById('streak-level-2');
+        const streakAnim3 = document.getElementById('streak-level-3');
+        const streakCount = data.streakCount || 0; // Ambil streakCount dari data
+
+        // Sembunyikan semua animasi dulu
+        streakAnim1.style.display = 'none';
+        streakAnim2.style.display = 'none';
+        streakAnim3.style.display = 'none';
+
+        if (streakCount > 0) {
+          streakContainer.style.display = 'block'; // Tampilkan container
+          streakText.innerText = `🔥 Streak Kehadiran: ${streakCount} Minggu!`;
+
+          // Tampilkan animasi sesuai level
+          if (streakCount >= 10) {
+            streakAnim3.style.display = 'block'; // Level 3
+          } else if (streakCount >= 5) {
+            streakAnim2.style.display = 'block'; // Level 2
+          } else {
+            streakAnim1.style.display = 'block'; // Level 1
+          }
+        } else {
+          streakContainer.style.display = 'none'; // Sembunyikan kalau streak 0
+        }
+        // --- AKHIR KODE STREAK ---
 
         // Update Dashboard Utama
         if (data.success) {

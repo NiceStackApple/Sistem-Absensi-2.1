@@ -75,6 +75,28 @@
             text-align: center; /* Teks di tengah */
             min-width: 120px; /* Lebar minimum per kotak */
         }
+        /* CSS BARU UNTUK RUNNING TEXT MODERN */
+        .running-text-wrapper {
+            overflow: hidden;      /* Sembunyikan teks yg keluar box */
+            white-space: nowrap;   /* Pastikan teks 1 baris */
+            position: relative;    /* Diperlukan untuk animasi */
+        }
+        .running-text-content {
+            display: inline-block; /* Agar bisa dianimasikan */
+            padding-left: 100%;    /* Mulai dari luar layar kanan */
+            animation: marquee-scroll 15s linear infinite; /* Terapkan animasi */
+        }
+
+        /* Definisi Animasinya */
+        @keyframes marquee-scroll {
+            0%   { transform: translateX(0); }     /* Mulai dari kanan */
+            100% { transform: translateX(-100%); } /* Selesai di kiri */
+        }
+
+        /* Hentikan animasi saat di-hover (opsional) */
+        .running-text-wrapper:hover .running-text-content {
+            animation-play-state: paused;
+        }
 
         /* Style Tabel Admin (Clean) */
         #sheet-viewer-table {
@@ -174,7 +196,8 @@
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
 
-            <div id="running-text-container" class="alert alert-info" style="display: none; font-weight: bold; border-radius: 0.5rem; padding-top: 0.8rem; padding-bottom: 0.8rem;"> <marquee id="running-text-content" behavior="scroll" direction="left" scrollamount="5"></marquee> </div>
+            <div id="running-text-container" class="alert alert-info running-text-wrapper" style="display: none; font-weight: bold; border-radius: 0.5rem; padding-top: 0.8rem; padding-bottom: 0.8rem; overflow: hidden; white-space: nowrap;">
+              <span id="running-text-content" class="running-text-content"></span> </div>
             
 
             <div class="card mb-4">

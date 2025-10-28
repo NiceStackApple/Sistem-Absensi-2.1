@@ -407,221 +407,240 @@
 
     <script>
 
-    // ===================================
-    // “RUANG TAMU” / GLOBAL SCOPE
-    // ===================================
+        // ===================================
+        // “RUANG TAMU” / GLOBAL SCOPE
+        // ===================================
 
-    const API_URL = "/api/gas-proxy";
-    let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
+        const API_URL = "/api/gas-proxy";
+        let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
 
-    // --- Definisi Fungsi Global ---
+        // --- Definisi Fungsi Global ---
 
-    function showDashboard() {
-        document.getElementById('login-view').style.display = 'none';
-        document.getElementById('dashboard-view').style.display = 'block';
-        document.getElementById('app-footer').style.display = 'block'; // Pastikan footer muncul
-        document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
-    }
-
-    function updateDashboardUI(data) {
-        // Update Pengumuman
-        const announcementContainer = document.getElementById('running-text-container');
-        const announcementContent = document.getElementById('running-text-content');
-        if (data.runningText && data.runningText.trim() !== "") {
-          announcementContent.innerText = data.runningText;
-          announcementContainer.style.display = 'block';
-        } else {
-          announcementContainer.style.display = 'none';
+        function showDashboard() {
+            document.getElementById('login-view').style.display = 'none'; // Sembunyikan Login
+            document.getElementById('dashboard-view').style.display = 'block'; // Tampilkan Dashboard
+            document.getElementById('app-footer').style.display = 'block';
+            document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
         }
 
-        // --- KODE BARU UNTUK UPDATE STREAK ---
-        const streakContainer = document.getElementById('streak-container');
-        const streakText = document.getElementById('streak-text');
-        const streakAnim1 = document.getElementById('streak-level-1');
-        const streakAnim2 = document.getElementById('streak-level-2');
-        const streakAnim3 = document.getElementById('streak-level-3');
-        const streakCount = data.streakCount || 0; // Ambil streakCount dari data
+        function updateDashboardUI(data) {
+            // Update Pengumuman
+            const announcementContainer = document.getElementById('running-text-container');
+            const announcementContent = document.getElementById('running-text-content');
+            if (data.runningText && data.runningText.trim() !== "") {
+              announcementContent.innerText = data.runningText;
+              announcementContainer.style.display = 'block';
+            } else {
+              announcementContainer.style.display = 'none';
+            }
 
-        // Sembunyikan semua animasi dulu
-        streakAnim1.style.display = 'none';
-        streakAnim2.style.display = 'none';
-        streakAnim3.style.display = 'none';
+            // Update Streak
+            const streakContainer = document.getElementById('streak-container');
+            const streakText = document.getElementById('streak-text');
+            const streakAnim1 = document.getElementById('streak-level-1');
+            const streakAnim2 = document.getElementById('streak-level-2');
+            const streakAnim3 = document.getElementById('streak-level-3');
+            const streakCount = data.streakCount || 0;
+            streakContainer.style.display = 'block'; // Selalu tampil
+            streakAnim1.style.display = 'none'; streakAnim2.style.display = 'none'; streakAnim3.style.display = 'none';
+            if (streakCount > 0) {
+              streakText.innerText = `🔥 Streak Kehadiran: ${streakCount} Minggu!`;
+              if (streakCount >= 10) streakAnim3.style.display = 'block';
+              else if (streakCount >= 5) streakAnim2.style.display = 'block';
+              else streakAnim1.style.display = 'block';
+            } else {
+              streakText.innerText = `Ayo mulai streak kehadiranmu! 🔥`;
+            }
 
-        if (streakCount > 0) {
-          streakContainer.style.display = 'block'; // Tampilkan container
-          streakText.innerText = `🔥 Streak Kehadiran: ${streakCount} Minggu!`;
+            // Update Dashboard Utama
+            if (data.success) {
+                document.getElementById('current-month').innerText = data.currentMonth;
+                document.getElementById('current-week').innerText = data.currentWeek;
+                const statusBadge = document.getElementById('current-status');
+                const currentStatusLower = data.currentStatus.toLowerCase();
+                statusBadge.innerText = (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'Libur/Acara' : data.currentStatus;
+                statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'badge-primary' : 'badge-danger');
 
-          // Tampilkan animasi sesuai level
-          if (streakCount >= 10) {
-            streakAnim3.style.display = 'block'; // Level 3
-          } else if (streakCount >= 5) {
-            streakAnim2.style.display = 'block'; // Level 2
-          } else {
-            streakAnim1.style.display = 'block'; // Level 1
-          }
-        } else {
-          streakContainer.style.display = 'none'; // Sembunyikan kalau streak 0
-        }
-        // --- AKHIR KODE STREAK ---
+                // Update Status Mingguan (Flexbox)
+                const monthlyDiv = document.getElementById('monthly-attendance');
+                monthlyDiv.innerHTML = '';
+                if(data.monthlyAttendance && data.monthlyAttendance.length > 0) { // Cek dulu
+                    data.monthlyAttendance.forEach(att => {
+                        if (att.status !== '-') {
+                            let statusClass = '';
+                            if (att.status === 'Hadir') statusClass = 'text-success';
+                            else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
+                            else if (att.status === 'Alpha') statusClass = 'text-danger';
+                            else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
+                            else statusClass = 'text-dark';
 
-        // Update Dashboard Utama
-        if (data.success) {
-            document.getElementById('current-month').innerText = data.currentMonth;
-            document.getElementById('current-week').innerText = data.currentWeek;
-            const statusBadge = document.getElementById('current-status');
-            const currentStatusLower = data.currentStatus.toLowerCase();
-            statusBadge.innerText = (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'Libur/Acara' : data.currentStatus;
-            statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'badge-primary' : 'badge-danger');
-
-            // Update Status Mingguan (Flexbox)
-            const monthlyDiv = document.getElementById('monthly-attendance');
-            monthlyDiv.innerHTML = '';
-            data.monthlyAttendance.forEach(att => {
-                if (att.status !== '-') {
-                    let statusClass = '';
-                    if (att.status === 'Hadir') statusClass = 'text-success';
-                    else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
-                    else if (att.status === 'Alpha') statusClass = 'text-danger';
-                    else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
-                    else statusClass = 'text-dark';
-
-                    monthlyDiv.innerHTML += `
-                        <div class="week-status-item">
-                            <strong>${att.week}:</strong>
-                            <span class="${statusClass}">${att.status.includes('https://drive.google.com') ? 'Izin' : att.status}</span>
-                        </div>
-                    `;
+                            monthlyDiv.innerHTML += `
+                                <div class="week-status-item">
+                                    <strong>${att.week}:</strong>
+                                    <span class="${statusClass}">${att.status.includes('https://drive.google.com') ? 'Izin' : att.status}</span>
+                                </div>
+                            `;
+                        }
+                    });
                 }
+
+                // Update Riwayat Absensi
+                const historyBody = document.getElementById('history-body');
+                historyBody.innerHTML = '';
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(log => {
+                        let statusClass = 'badge-secondary';
+                        if (log.status === 'Hadir') statusClass = 'badge-success';
+                        else if (log.status === 'Izin') statusClass = 'badge-warning';
+                        else if (log.status === 'Alpha') statusClass = 'badge-danger';
+                        else if (log.status.toLowerCase().includes('libur') || log.status.toLowerCase().includes('acara')) statusClass = 'badge-primary';
+                        const logStatusLower = log.status.toLowerCase();
+                        historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${(logStatusLower.includes('libur') || logStatusLower.includes('acara')) ? 'Libur/Acara' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
+                    });
+                } else {
+                    historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
+                }
+            } else {
+                showInfoModal('Gagal Memuat Dashboard', 'Gagal memuat data dashboard: ' + (data.message || 'Error tidak diketahui'), false);
+            }
+        }
+
+        // Fungsi handler untuk respon sukses (absen/izin)
+        function handleServerResponse(response) {
+            if (response.success) {
+                $('#qrModal').modal('hide');
+                $('#izinModal').modal('hide');
+                document.getElementById('izin-form').reset();
+                showInfoModal("Berhasil", response.message, true);
+                loadDashboard(); // Refresh data dashboard
+            } else {
+                showInfoModal("Gagal", response.message, false);
+            }
+        }
+
+        // Fungsi utilitas kamera
+        function stopCamera() {
+            const video = document.getElementById('video-preview');
+            if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+            if (video) video.style.display = 'none'; // Cek null
+            const startBtn = document.getElementById('start-camera-btn');
+            if(startBtn) startBtn.style.display = 'inline-block';
+            const captureBtn = document.getElementById('capture-btn');
+            if(captureBtn) captureBtn.style.display = 'none';
+        }
+        function stopHadirCamera() {
+            const video = document.getElementById('hadir-video-preview');
+            if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+            if (video) video.srcObject = null;
+        }
+
+        // Fungsi logout
+        function logout() {
+            localStorage.removeItem('loggedInUser');
+            currentUser = null;
+            location.reload();
+        }
+
+        // Fungsi modal pop-up (PENGGANTI ALERT)
+        function showInfoModal(title, message, isSuccess = false) {
+          const iconSuccess = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>';
+          const iconError = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="red" class="bi bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/></svg>';
+          const modalIcon = document.getElementById('infoModalIcon');
+          const modalTitle = document.getElementById('infoModalTitle');
+          const modalMessage = document.getElementById('infoModalMessage');
+          if(modalIcon) modalIcon.innerHTML = isSuccess ? iconSuccess : iconError;
+          if(modalTitle) modalTitle.innerText = title;
+          if(modalMessage) modalMessage.innerText = message;
+          $('#infoModal').modal('show');
+        }
+
+        // Fungsi (re)load data dashboard
+        async function loadDashboard() {
+          if (!currentUser) return;
+
+          const loader = document.getElementById('dashboard-loader');
+          const content = document.getElementById('dashboard-content');
+
+          // Tampilkan Loader, Sembunyikan Konten
+          if (loader) loader.style.display = 'flex';
+          if (content) content.style.display = 'none';
+
+          // Hapus data lama
+          const currentStatusEl = document.getElementById('current-status');
+          if(currentStatusEl) { currentStatusEl.innerText = ''; currentStatusEl.className = 'badge badge-secondary'; }
+          const monthlyAttEl = document.getElementById('monthly-attendance');
+          if(monthlyAttEl) monthlyAttEl.innerHTML = '';
+          const historyBodyEl = document.getElementById('history-body');
+          if(historyBodyEl) historyBodyEl.innerHTML = '';
+
+          try {
+            const dashboardData = await postToAPI({
+              action: 'getDashboardData',
+              nama: currentUser.nama,
+              kelas: currentUser.kelas
             });
 
-            // Update Riwayat Absensi
-            const historyBody = document.getElementById('history-body');
-            historyBody.innerHTML = '';
-            if (data.history && data.history.length > 0) { // Tambah cek data.history
-                data.history.forEach(log => {
-                    let statusClass = 'badge-secondary';
-                    if (log.status === 'Hadir') statusClass = 'badge-success';
-                    else if (log.status === 'Izin') statusClass = 'badge-warning';
-                    else if (log.status === 'Alpha') statusClass = 'badge-danger';
-                    else if (log.status.toLowerCase().includes('libur') || log.status.toLowerCase().includes('acara')) statusClass = 'badge-primary';
-                    const logStatusLower = log.status.toLowerCase();
-                    historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${(logStatusLower.includes('libur') || logStatusLower.includes('acara')) ? 'Libur/Acara' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
-                });
+            // Update UI
+            updateDashboardUI(dashboardData);
+
+            // Sembunyikan Loader, Tampilkan Konten (HANYA JIKA SUKSES)
+            // Cek dulu dashboardData.success sebelum nampilin konten
+            if (dashboardData.success) {
+                if (loader) loader.style.display = 'none';
+                if (content) content.style.display = 'block';
             } else {
-                historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
+                 if (loader) loader.style.display = 'none'; // Sembunyikan loader walau gagal
+                 // Mungkin tampilkan pesan error di konten?
             }
-        } else {
-            showInfoModal('Gagal Memuat Dashboard', 'Gagal memuat data dashboard: ' + data.message, false);
+
+          } catch (err) {
+            console.error('Gagal memuat dashboard:', err);
+            showInfoModal('Gagal', 'Gagal mengambil data dashboard: ' + err.message, false);
+            if (loader) loader.style.display = 'none'; // Sembunyikan loader jika error
+          }
         }
-    }
 
-    // Fungsi handler untuk respon sukses (absen/izin)
-    function handleServerResponse(response) {
-        if (response.success) {
-            $('#qrModal').modal('hide');
-            $('#izinModal').modal('hide');
-            document.getElementById('izin-form').reset();
-            showInfoModal("Berhasil", response.message, true);
-            loadDashboard(); // Refresh data dashboard
-        } else {
-            showInfoModal("Gagal", response.message, false);
-        }
-    }
-
-    // Fungsi utilitas kamera
-    function stopCamera() {
-        const video = document.getElementById('video-preview');
-        const startCameraBtn = document.getElementById('start-camera-btn');
-        const captureBtn = document.getElementById('capture-btn');
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-        video.style.display = 'none';
-        startCameraBtn.style.display = 'inline-block';
-        captureBtn.style.display = 'none';
-    }
-
-    // Fungsi logout
-    function logout() {
-        localStorage.removeItem('loggedInUser');
-        currentUser = null;
-        location.reload();
-    }
-
-    // Fungsi modal pop-up (PENGGANTI ALERT)
-    function showInfoModal(title, message, isSuccess = false) {
-      const iconSuccess = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="green" class="bi bi-check-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>';
-      const iconError = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="red" class="bi bi-x-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/></svg>';
-
-      document.getElementById('infoModalTitle').innerText = title;
-      document.getElementById('infoModalMessage').innerText = message;
-      document.getElementById('infoModalIcon').innerHTML = isSuccess ? iconSuccess : iconError;
-
-      $('#infoModal').modal('show');
-    }
-
-    // Fungsi (re)load data dashboard
-    async function loadDashboard() {
-      if (!currentUser) return;
-      document.getElementById('current-status').innerText = 'Memuat...';
-      document.getElementById('current-status').className = 'badge badge-secondary';
-      document.getElementById('monthly-attendance').innerHTML = '';
-      document.getElementById('history-body').innerHTML = '<tr><td colspan="3" class="text-center">Memuat riwayat...</td></tr>';
-
-      try {
-        const dashboardData = await postToAPI({
-          action: 'getDashboardData',
-          nama: currentUser.nama,
-          kelas: currentUser.kelas
-        });
-        updateDashboardUI(dashboardData);
-      } catch (err) {
-        console.error('Gagal memuat dashboard:', err);
-        showInfoModal('Gagal', 'Gagal mengambil data dashboard: ' + err.message, false);
-      }
-    }
-
-    // Fungsi ambil lokasi (GPS)
-    function getCurrentPosition() {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('Geolocation tidak didukung oleh browser Anda.'));
-        } else {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              resolve({
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-              });
-            },
-            () => {
-              reject(new Error('Gagal mendapatkan lokasi. Pastikan GPS aktif dan Anda mengizinkan akses.'));
-            },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-          );
-        }
-      });
-    }
-
-    // ===================================
-    // “KAMAR KHUSUS” / DOMContentLoaded
-    // Semua event listener ditaruh di sini
-    // ===================================
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // Cek login dari localStorage
-        const loggedInUser = localStorage.getItem('loggedInUser');
-        if (loggedInUser) {
-            currentUser = JSON.parse(loggedInUser);
-            showDashboard();
-            loadDashboard(); // Muat data dashboard
-            // Tampilkan panel admin jika dia admin
-            if (currentUser && currentUser.isAdmin) {
-              document.getElementById('admin-panel').style.display = 'block';
+        // Fungsi ambil lokasi (GPS)
+        function getCurrentPosition() {
+          return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+              reject(new Error('Geolocation tidak didukung oleh browser Anda.'));
+            } else {
+              navigator.geolocation.getCurrentPosition(
+                (position) => { resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude }); },
+                () => { reject(new Error('Gagal mendapatkan lokasi. Pastikan GPS aktif dan Anda mengizinkan akses.')); },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+              );
             }
+          });
         }
 
+        // ===================================
+        // “KAMAR KHUSUS” / DOMContentLoaded
+        // ===================================
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Cek login dari localStorage
+            const loggedInUser = localStorage.getItem('loggedInUser');
+            if (loggedInUser) {
+                try {
+                    currentUser = JSON.parse(loggedInUser);
+                    if(currentUser && currentUser.nama) { // Cek validitas
+                        showDashboard();
+                        loadDashboard(); // Muat data dashboard
+                        if (currentUser.isAdmin) {
+                            const adminPanel = document.getElementById('admin-panel');
+                            if(adminPanel) adminPanel.style.display = 'block';
+                        }
+                    } else {
+                        // Data user tidak valid, hapus
+                        localStorage.removeItem('loggedInUser');
+                    }
+                } catch(e) {
+                    console.error("Error parsing user data:", e);
+                    localStorage.removeItem('loggedInUser'); // Hapus data rusak
+                }
+            }
         // Listener Form Login
         document.getElementById('login-form').addEventListener('submit', async function(e) {
               e.preventDefault();

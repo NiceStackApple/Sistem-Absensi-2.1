@@ -86,7 +86,7 @@
             background-color: #ffffff;
         }
         #sheet-viewer-table th {
-            background-color: #343a40; /* Header lebih gelap */
+            background-color: #198754; /* Header Hijau Tua */
             color: #ffffff;
             text-align: left;
             padding: 12px 16px;
@@ -241,8 +241,7 @@
                 <div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div>
                 <div class="card-body">
                     <p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p>
-                    <div id="monthly-attendance" class="row"></div>
-                </div>
+                    <div id="monthly-attendance"></div> </div>
             </div>
 
             <div class="card">
@@ -293,7 +292,18 @@
         </div>
     </div>
 
-    <div class="modal fade" id="qrModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Scan QR Code Absensi</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div><div class="modal-body"><div id="qr-reader" style="width: 100%;"></div><div id="qr-result" class="mt-3"></div></div></div></div></div>
+    <div class="modal fade" id="qrModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Scan QR Code Absensi</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div><div class="modal-body text-center"> <div id="qr-scan-area">
+        <div id="qr-reader" style="width: 100%;"></div>
+        <div id="qr-result" class="mt-3 font-weight-bold">Arahkan kamera ke QR Code...</div>
+    </div>
+    <div id="hadir-photo-area" style="display: none;">
+        <p>Silakan ambil foto selfie sebagai bukti kehadiran:</p>
+        <video id="hadir-video-preview" width="100%" style="border-radius: 8px;" autoplay playsinline></video>
+        <canvas id="hadir-photo-canvas" style="display: none;"></canvas>
+        <button type="button" id="hadir-capture-btn" class="btn btn-primary mt-3">Jepret Foto</button>
+        <p id="hadir-photo-status" class="mt-2 font-weight-bold"></p>
+    </div>
+</div></div></div></div>
 
     <div class="modal fade" id="izinModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Form Pengajuan Izin</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div><div class="modal-body text-left"><form id="izin-form"><div class="form-group"><label for="alasan">1. Tuliskan alasan izin Anda:</label><textarea class="form-control" id="alasan" rows="3" required></textarea></div><div class="form-group"><label>2. Ambil Foto Bukti (Wajib)</label><div id="camera-container" class="text-center"><video id="video-preview" width="100%" style="display: none;"></video><canvas id="photo-canvas" style="display: none;"></canvas><img id="photo-preview" src="" width="100%" style="display: none;" class="mb-2"/><button type="button" id="start-camera-btn" class="btn btn-secondary">Buka Kamera</button><button type="button" id="capture-btn" class="btn btn-primary" style="display: none;">Jepret Foto</button></div></div><button type="submit" class="btn btn-primary mt-3">Kirim Izin</button></form></div></div></div></div>
 
@@ -357,6 +367,7 @@
       </div>
     </div>
 
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -376,12 +387,12 @@
     function showDashboard() {
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('dashboard-view').style.display = 'block';
-        document.getElementById('app-footer').style.display = 'block';
+        document.getElementById('app-footer').style.display = 'block'; // Pastikan footer muncul
         document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
     }
 
     function updateDashboardUI(data) {
-        // Update Pengumuman (Bukan Running Text lagi)
+        // Update Pengumuman
         const announcementContainer = document.getElementById('running-text-container');
         const announcementContent = document.getElementById('running-text-content');
         if (data.runningText && data.runningText.trim() !== "") {
@@ -396,41 +407,35 @@
             document.getElementById('current-month').innerText = data.currentMonth;
             document.getElementById('current-week').innerText = data.currentWeek;
             const statusBadge = document.getElementById('current-status');
-            statusBadge.innerText = data.currentStatus;
-            // Update warna badge (hapus 'Acara')
-            // Tampilkan "Libur" jika statusnya mengandung "Libur"
-            // Tampilkan "Libur/Acara" jika statusnya mengandung "libur" atau "acara"
             const currentStatusLower = data.currentStatus.toLowerCase();
             statusBadge.innerText = (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'Libur/Acara' : data.currentStatus;
             statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'badge-primary' : 'badge-danger');
-            // Update Status Mingguan
+
+            // Update Status Mingguan (Flexbox)
             const monthlyDiv = document.getElementById('monthly-attendance');
             monthlyDiv.innerHTML = '';
             data.monthlyAttendance.forEach(att => {
-           // Tampilkan HANYA jika statusnya bukan "-"
-           if (att.status !== '-') {
-               let statusClass = ''; // Reset class warna
-               // Logika warna Teks (bukan background lagi)
-               if (att.status === 'Hadir') statusClass = 'text-success';
-               else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
-               else if (att.status === 'Alpha') statusClass = 'text-danger';
-               else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
-               else statusClass = 'text-dark'; // Warna default jika bukan di atas
+                if (att.status !== '-') {
+                    let statusClass = '';
+                    if (att.status === 'Hadir') statusClass = 'text-success';
+                    else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
+                    else if (att.status === 'Alpha') statusClass = 'text-danger';
+                    else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
+                    else statusClass = 'text-dark';
 
-               // Buat elemen div baru untuk tiap minggu
-               monthlyDiv.innerHTML += `
-                   <div class="week-status-item">
-                       <strong>${att.week}:</strong> 
-                       <span class="${statusClass}">${att.status}</span>
-                   </div>
-               `;
-           }
-       });
+                    monthlyDiv.innerHTML += `
+                        <div class="week-status-item">
+                            <strong>${att.week}:</strong>
+                            <span class="${statusClass}">${att.status.includes('https://drive.google.com') ? 'Izin' : att.status}</span>
+                        </div>
+                    `;
+                }
+            });
 
             // Update Riwayat Absensi
             const historyBody = document.getElementById('history-body');
             historyBody.innerHTML = '';
-            if (data.history.length > 0) {
+            if (data.history && data.history.length > 0) { // Tambah cek data.history
                 data.history.forEach(log => {
                     let statusClass = 'badge-secondary';
                     if (log.status === 'Hadir') statusClass = 'badge-success';
@@ -670,7 +675,7 @@
                 action: 'setHolidayStatus',
                 nama: currentUser.nama,
                 alasanLibur: alasan,
-                targetWeek: targetWeekValue // <-- Tambah ini
+                targetWeek: targetWeekValue
               });
 
               if (result.success) {
@@ -719,7 +724,7 @@
               const result = await postToAPI({
                 action: 'revokeHolidayStatus',
                 nama: currentUser.nama,
-                targetWeek: targetWeekValue // <-- Tambah ini
+                targetWeek: targetWeekValue
               });
 
               if (result.success) {
@@ -759,7 +764,6 @@
 
               // Buat <thead> (Header)
               const thead = document.createElement('thead');
-              // thead.className = 'thead-dark'; // Hapus ini biar pakai style CSS baru
               const headerRow = document.createElement('tr');
               result.headers.forEach(headerText => {
                 if (!headerText) return;
@@ -834,6 +838,7 @@
                         if (!dataUrl.startsWith('https://drive.google.com')) throw new Error();
                      } catch (e) {
                         // Jika parsing gagal, fallback ke modal simpel
+                        console.error("Gagal parsing data Izin:", cellText, e);
                         modalTarget = '#detailModal';
                         displayText = 'Izin (Err)';
                         btnClass = 'btn-secondary'; // Ganti warna jadi abu-abu
@@ -930,7 +935,7 @@
             } catch (err) { showInfoModal("Gagal", "Tidak bisa mengakses kamera: " + err, false); }
         });
 
-        // Listener Tombol Jepret
+        // Listener Tombol Jepret Izin
         document.getElementById('capture-btn').addEventListener('click', () => {
             const video = document.getElementById('video-preview');
             const canvas = document.getElementById('photo-canvas');
@@ -951,49 +956,119 @@
 
         // Listener Modal QR (Saat DIBUKA)
         $('#qrModal').on('show.bs.modal', function (e) {
+            // Reset UI ke state awal (Scan QR)
+            document.getElementById('qr-scan-area').style.display = 'block';
+            document.getElementById('hadir-photo-area').style.display = 'none';
+            document.getElementById('qr-result').innerText = "Arahkan kamera ke QR Code...";
+            document.getElementById('hadir-photo-status').innerText = '';
+            stopHadirCamera(); // Matikan stream kamera depan jika masih nyala
+
             html5QrCode = new Html5Qrcode("qr-reader");
             const qrResultElement = document.getElementById('qr-result');
-            qrResultElement.innerText = "Arahkan kamera ke QR Code...";
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
             const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
-                if (html5QrCode.isScanning) {
-                    qrResultElement.innerText = `Scan berhasil! Mendapatkan lokasi Anda...`;
+                if (!html5QrCode || !html5QrCode.isScanning) return; // Pastikan masih scan
 
-                    try {
-                        await html5QrCode.stop();
-                        const position = await getCurrentPosition();
-                        qrResultElement.innerText = `Lokasi didapat! Memproses absensi...`;
+                qrResultElement.innerText = `Scan berhasil! Mendapatkan lokasi Anda...`;
 
-                        const result = await postToAPI({
-                          action: 'markHadirViaQR',
-                          nama: currentUser.nama,
-                          kelas: currentUser.kelas,
-                          qrCodeData: decodedText,
-                          latitude: position.latitude,
-                          longitude: position.longitude
-                        });
-
-                        handleServerResponse(result);
-
-                    } catch (error) {
-                        console.error('Error QR/Location:', error);
-                        showInfoModal("Error", "Terjadi kesalahan: " + error.message, false);
-                        $('#qrModal').modal('hide');
-                    }
+                try {
+                    await html5QrCode.stop();
+                    html5QrCode = null; // Reset objek scanner
+                    const position = await getCurrentPosition();
+                    qrResultElement.innerText = `Lokasi didapat! Memulai kamera depan...`;
+                    document.getElementById('qr-scan-area').style.display = 'none';
+                    document.getElementById('hadir-photo-area').style.display = 'block';
+                    await startHadirCamera();
+                    window.pendingAttendanceData = { decodedText, latitude: position.latitude, longitude: position.longitude };
+                } catch (error) {
+                    console.error('Error QR/Location/Camera:', error);
+                    showInfoModal("Error", "Gagal memproses: " + error.message, false);
+                    $('#qrModal').modal('hide');
                 }
             };
 
             html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
                 .catch(err => {
-                    qrResultElement.innerText = "ERROR: Gagal memulai kamera.";
+                    qrResultElement.innerText = "ERROR: Gagal memulai kamera QR.";
+                    console.error("QR Start Error:", err);
                 });
         });
 
         // Listener Modal QR (Saat DITUTUP)
         $('#qrModal').on('hide.bs.modal', function (e) {
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop();
+                try { html5QrCode.stop(); } catch(e){}
+                html5QrCode = null;
+            }
+            stopHadirCamera(); // Pastikan kamera depan mati
+            window.pendingAttendanceData = null; // Hapus data pending
+        });
+
+        // Fungsi Baru Kamera Hadir
+        async function startHadirCamera() {
+            const video = document.getElementById('hadir-video-preview');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = stream;
+            } catch (err) {
+                document.getElementById('hadir-photo-status').innerText = "Gagal memulai kamera depan: " + err.message;
+                console.error("Hadir Camera Start Error:", err);
+                throw err;
+            }
+        }
+
+        function stopHadirCamera() {
+            const video = document.getElementById('hadir-video-preview');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            video.srcObject = null;
+        }
+
+        // Listener Tombol Jepret Hadir
+        document.getElementById('hadir-capture-btn').addEventListener('click', async () => {
+            const video = document.getElementById('hadir-video-preview');
+            const canvas = document.getElementById('hadir-photo-canvas');
+            const statusElement = document.getElementById('hadir-photo-status');
+            const captureBtn = document.getElementById('hadir-capture-btn');
+
+            if (!stream || !window.pendingAttendanceData) {
+                showInfoModal("Error", "Data absen tidak lengkap atau kamera belum siap.", false);
+                return;
+            }
+
+            statusElement.innerText = "Mengambil gambar...";
+            captureBtn.disabled = true;
+
+            try {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg');
+                stopHadirCamera();
+                statusElement.innerText = "Foto diambil! Mengirim data absensi...";
+
+                const result = await postToAPI({
+                    action: 'markHadirViaQR',
+                    nama: currentUser.nama,
+                    kelas: currentUser.kelas,
+                    qrCodeData: window.pendingAttendanceData.decodedText,
+                    latitude: window.pendingAttendanceData.latitude,
+                    longitude: window.pendingAttendanceData.longitude,
+                    imageData: imageData
+                });
+
+                handleServerResponse(result);
+                window.pendingAttendanceData = null;
+
+            } catch (error) {
+                console.error('Error Capture/Submit Hadir:', error);
+                showInfoModal("Error", "Gagal memproses foto bukti: " + error.message, false);
+                statusElement.innerText = "Gagal: " + error.message;
+            } finally {
+                captureBtn.disabled = false;
             }
         });
 
@@ -1017,9 +1092,10 @@
           try {
             // Sulap link GDrive jadi link thumbnail (FIXED: Ganti ID placeholder)
             const fileId = url.split('/d/')[1].split('/')[0];
-            previewUrl = `https://lh3.googleusercontent.com/d/${fileId}=s220`; // Link thumbnail
+            // Format URL thumbnail GDrive yang benar
+            previewUrl = `https://lh3.googleusercontent.com/d/${fileId}=s220`;
           } catch (e) {
-            console.error("Gagal ekstrak ID GDrive:", e);
+            console.error("Gagal ekstrak ID GDrive:", e, "dari URL:", url);
             previewUrl = '';
           }
 
@@ -1093,3 +1169,4 @@
     </script>
 </body>
 </html>
+

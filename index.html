@@ -424,11 +424,11 @@
     // --- Definisi Fungsi Global ---
 
     function showDashboard() {
-        document.getElementById('login-view').style.display = 'none';
-        document.getElementById('dashboard-view').style.display = 'block';
-        document.getElementById('app-footer').style.display = 'block'; // Pastikan footer muncul
-        document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
-    }
+    document.getElementById('login-view').style.display = 'none'; // <-- TAMBAH INI
+    document.getElementById('dashboard-view').style.display = 'block';
+    document.getElementById('app-footer').style.display = 'block';
+    document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
+}
 
     function updateDashboardUI(data) {
         // Update Pengumuman
@@ -441,13 +441,15 @@
           announcementContainer.style.display = 'none';
         }
 
-        // --- KODE BARU UNTUK UPDATE STREAK ---
+       // --- KODE BARU UNTUK UPDATE STREAK (SELALU TAMPIL) ---
         const streakContainer = document.getElementById('streak-container');
         const streakText = document.getElementById('streak-text');
         const streakAnim1 = document.getElementById('streak-level-1');
         const streakAnim2 = document.getElementById('streak-level-2');
         const streakAnim3 = document.getElementById('streak-level-3');
-        const streakCount = data.streakCount || 0; // Ambil streakCount dari data
+        const streakCount = data.streakCount || 0;
+
+        streakContainer.style.display = 'block'; // SELALU tampilkan container
 
         // Sembunyikan semua animasi dulu
         streakAnim1.style.display = 'none';
@@ -455,19 +457,15 @@
         streakAnim3.style.display = 'none';
 
         if (streakCount > 0) {
-          streakContainer.style.display = 'block'; // Tampilkan container
           streakText.innerText = `🔥 Streak Kehadiran: ${streakCount} Minggu!`;
-
           // Tampilkan animasi sesuai level
-          if (streakCount >= 10) {
-            streakAnim3.style.display = 'block'; // Level 3
-          } else if (streakCount >= 5) {
-            streakAnim2.style.display = 'block'; // Level 2
-          } else {
-            streakAnim1.style.display = 'block'; // Level 1
-          }
+          if (streakCount >= 10) streakAnim3.style.display = 'block';
+          else if (streakCount >= 5) streakAnim2.style.display = 'block';
+          else streakAnim1.style.display = 'block';
         } else {
-          streakContainer.style.display = 'none'; // Sembunyikan kalau streak 0
+          // Tampilan kalau streak 0
+          streakText.innerText = `Ayo mulai streak kehadiranmu! 🔥`;
+          // Tidak ada animasi yang ditampilkan
         }
         // --- AKHIR KODE STREAK ---
 

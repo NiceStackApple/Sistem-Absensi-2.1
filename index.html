@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
     <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@^1.0.0/dist/dotlottie-wc.js" type="module"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/dotStream.js"></script>
+    
 
     <style>
         /* =============================================== */
@@ -191,13 +191,6 @@
         </div>
 
         <div id="dashboard-view">
-          <l-dot-stream
-          size="80"   
-          speed="2"
-          color="#007bff"
-          ></l-dot-stream>
-          </div>
-          <div id="dashboard-content" style="display: none;"></div>
             <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
 
             <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
@@ -424,11 +417,11 @@
     // --- Definisi Fungsi Global ---
 
     function showDashboard() {
-    document.getElementById('login-view').style.display = 'none'; // <-- TAMBAH INI
-    document.getElementById('dashboard-view').style.display = 'block';
-    document.getElementById('app-footer').style.display = 'block';
-    document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
-}
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        document.getElementById('app-footer').style.display = 'block'; // Pastikan footer muncul
+        document.getElementById('welcome-message').innerText = `Selamat Datang, ${currentUser.nama}!`;
+    }
 
     function updateDashboardUI(data) {
         // Update Pengumuman
@@ -441,15 +434,13 @@
           announcementContainer.style.display = 'none';
         }
 
-       // --- KODE BARU UNTUK UPDATE STREAK (SELALU TAMPIL) ---
+        // --- KODE BARU UNTUK UPDATE STREAK ---
         const streakContainer = document.getElementById('streak-container');
         const streakText = document.getElementById('streak-text');
         const streakAnim1 = document.getElementById('streak-level-1');
         const streakAnim2 = document.getElementById('streak-level-2');
         const streakAnim3 = document.getElementById('streak-level-3');
-        const streakCount = data.streakCount || 0;
-
-        streakContainer.style.display = 'block'; // SELALU tampilkan container
+        const streakCount = data.streakCount || 0; // Ambil streakCount dari data
 
         // Sembunyikan semua animasi dulu
         streakAnim1.style.display = 'none';
@@ -457,15 +448,19 @@
         streakAnim3.style.display = 'none';
 
         if (streakCount > 0) {
+          streakContainer.style.display = 'block'; // Tampilkan container
           streakText.innerText = `🔥 Streak Kehadiran: ${streakCount} Minggu!`;
+
           // Tampilkan animasi sesuai level
-          if (streakCount >= 10) streakAnim3.style.display = 'block';
-          else if (streakCount >= 5) streakAnim2.style.display = 'block';
-          else streakAnim1.style.display = 'block';
+          if (streakCount >= 10) {
+            streakAnim3.style.display = 'block'; // Level 3
+          } else if (streakCount >= 5) {
+            streakAnim2.style.display = 'block'; // Level 2
+          } else {
+            streakAnim1.style.display = 'block'; // Level 1
+          }
         } else {
-          // Tampilan kalau streak 0
-          streakText.innerText = `Ayo mulai streak kehadiranmu! 🔥`;
-          // Tidak ada animasi yang ditampilkan
+          streakContainer.style.display = 'none'; // Sembunyikan kalau streak 0
         }
         // --- AKHIR KODE STREAK ---
 
@@ -567,48 +562,24 @@
     }
 
     // Fungsi (re)load data dashboard
-    // GANTI TOTAL FUNGSI loadDashboard DENGAN INI
     async function loadDashboard() {
       if (!currentUser) return;
-
-      const loader = document.getElementById('dashboard-loader');
-      const content = document.getElementById('dashboard-content');
-
-      // 1. Tampilkan Loader, Sembunyikan Konten
-      loader.style.display = 'flex'; // Pakai flex biar tetep di tengah
-      content.style.display = 'none';
-
-      // Hapus data lama (opsional, biar bersih sebelum load baru)
-      document.getElementById('current-status').innerText = '';
+      document.getElementById('current-status').innerText = 'Memuat...';
+      document.getElementById('current-status').className = 'badge badge-secondary';
       document.getElementById('monthly-attendance').innerHTML = '';
-      document.getElementById('history-body').innerHTML = '';
-      // Jangan tampilkan placeholder "Memuat..." lagi
+      document.getElementById('history-body').innerHTML = '<tr><td colspan="3" class="text-center">Memuat riwayat...</td></tr>';
 
       try {
-        // 2. Ambil data dashboard
         const dashboardData = await postToAPI({
           action: 'getDashboardData',
           nama: currentUser.nama,
           kelas: currentUser.kelas
         });
-
-        // 3. Update UI dengan data baru
         updateDashboardUI(dashboardData);
-
-        // 4. SEMBUNYIKAN Loader, TAMPILKAN Konten (HANYA JIKA SUKSES)
-        loader.style.display = 'none';
-        content.style.display = 'block';
-
       } catch (err) {
         console.error('Gagal memuat dashboard:', err);
         showInfoModal('Gagal', 'Gagal mengambil data dashboard: ' + err.message, false);
-        // Jika GAGAL, loader tetap disembunyikan, tapi konten mungkin tetap kosong atau tampilkan pesan error
-        loader.style.display = 'none';
-        // Opsional: Tampilkan pesan error di area konten
-        // content.innerHTML = `<p class="text-danger text-center mt-4">Gagal memuat data.</p>`;
-        // content.style.display = 'block';
       }
-      // Note: 'finally' block tidak diperlukan di sini karena kita handle hide/show di dalam try dan catch
     }
 
     // Fungsi ambil lokasi (GPS)

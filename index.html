@@ -140,7 +140,7 @@
             border: none; /* Hapus border pre */
             white-space: normal; /* Biar wrap */
         }
-        
+
         /* =============================================== */
         /* -- Style Footer -- */
         .footer-custom {
@@ -170,6 +170,13 @@
         @media (min-width: 768px) { .container { max-width: 720px; } }
         @media (min-width: 992px) { .container { max-width: 960px; } }
         @media (min-width: 1200px) { .container { max-width: 1140px; } }
+
+        /* CSS BARU UNTUK EFEK GLOW API STREAK */
+    #streak-animation dotlottie-wc[style*="display: block"] { /* Target animasi yg lagi tampil */
+    filter: drop-shadow(0 0 10px rgba(255, 100, 0, 0.6)); /* Efek glow oranye */
+    /* Alternatif: Pakai box-shadow kalau drop-shadow nggak cocok */
+    /* box-shadow: 0 0 15px 5px rgba(255, 100, 0, 0.5); */
+}
     </style>
 </head>
 <body>
@@ -200,14 +207,16 @@
             <div id="running-text-container" class="alert alert-info running-text-wrapper" style="display: none; font-weight: bold; border-radius: 0.5rem; padding-top: 0.8rem; padding-bottom: 0.8rem; overflow: hidden; white-space: nowrap;">
               <span id="running-text-content" class="running-text-content"></span> </div>
             
-              <div id="streak-container" class="text-center mb-4" style="display: none;">
-                <div id="streak-animation">
-                  <dotlottie-wc id="streak-level-1" src="https://lottie.host/fa4cda5b-9fad-4fe5-a0d2-684a9511be50/iSZVq0i9Es.lottie" style="width: 150px; height: 150px; display: none; margin: -20px auto -30px auto;" autoplay loop></dotlottie-wc>
-                  <dotlottie-wc id="streak-level-2" src="https://lottie.host/5c7aa082-e1c9-48c0-9f7f-f44715fd623a/gA7S2uW1fh.lottie" style="width: 150px; height: 150px; display: none; margin: -20px auto -30px auto;" autoplay loop></dotlottie-wc>
-                  <dotlottie-wc id="streak-level-3" src="https://lottie.host/0852df83-1f88-4bea-ba1f-b543c97d4c6d/ghOnr8XNcu.lottie" style="width: 150px; height: 150px; display: none; margin: -20px auto -30px auto;" autoplay loop></dotlottie-wc>
-              </div>
-                <h5 id="streak-text" style="font-weight: bold;"></h5>
+                  <div id="streak-card" class="card mb-4" style="display: block;"> <div class="card-body">
+                      <div class="row align-items-center"> <div class="col-auto" id="streak-animation-container"> <div id="streak-animation" style="position: relative;"> <dotlottie-wc id="streak-level-1" src="https://lottie.host/fa4cda5b-9fad-4fe5-a0d2-684a9511be50/iSZVq0i9Es.lottie" style="width: 80px; height: 80px; display: none;" autoplay loop></dotlottie-wc>
+                            <dotlottie-wc id="streak-level-2" src="https://lottie.host/5c7aa082-e1c9-48c0-9f7f-f44715fd623a/gA7S2uW1fh.lottie" style="width: 80px; height: 80px; display: none;" autoplay loop></dotlottie-wc>
+                            <dotlottie-wc id="streak-level-3" src="https://lottie.host/0852df83-1f88-4bea-ba1f-b543c97d4c6d/ghOnr8XNcu.lottie" style="width: 80px; height: 80px; display: none;" autoplay loop></dotlottie-wc>
+                        </div>
+                    </div>
+                    <div class="col"> <h5 id="streak-text" class="mb-0" style="font-weight: bold; text-align: left;">Memuat streak...</h5> </div>
+                </div>
             </div>
+        </div>
 
             <div class="card mb-4">
                 <div class="card-header">Menu Aksi</div>
@@ -434,13 +443,13 @@
             }
 
             // Update Streak
-            const streakContainer = document.getElementById('streak-container');
+            const streakCard = document.getElementById('streak-card'); // Ganti ID
             const streakText = document.getElementById('streak-text');
             const streakAnim1 = document.getElementById('streak-level-1');
             const streakAnim2 = document.getElementById('streak-level-2');
             const streakAnim3 = document.getElementById('streak-level-3');
             const streakCount = data.streakCount || 0;
-            streakContainer.style.display = 'block'; // Selalu tampil
+            streakCard.style.display = 'block'; // Selalu tampilkan card
             streakAnim1.style.display = 'none'; streakAnim2.style.display = 'none'; streakAnim3.style.display = 'none';
             if (streakCount > 0) {
               streakText.innerText = `🔥 Streak Kehadiran: ${streakCount} Minggu!`;

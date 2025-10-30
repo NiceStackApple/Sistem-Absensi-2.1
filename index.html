@@ -31,6 +31,59 @@
 
         #login-view { margin-top: 20px; }
         #dashboard-view { display: none; }
+        /* =============================================== */
+        /* == STYLE LOADER FULLSCREEN (BARU)            == */
+        /* =============================================== */
+        #fullscreen-loader {
+            position: fixed; /* Tetap di layar saat scroll */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8); /* Background putih transparan */
+            display: flex; /* Pakai flexbox buat centering */
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Pastikan di atas semua elemen lain */
+            backdrop-filter: blur(5px); /* Efek blur (opsional) */
+            -webkit-backdrop-filter: blur(5px); /* Untuk Safari */
+        }
+
+        /* CSS Loader Dots dari KODE LU (ganti .container jadi .loader-container) */
+        .loader-container {
+            --uib-size: 60px; /* Ukuran bisa disesuaikan */
+            --uib-color: #007bff; /* Warna biru Bootstrap */
+            --uib-speed: 1.5s;
+            --dot-size: calc(var(--uib-size) * 0.17);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: var(--uib-size);
+            width: var(--uib-size);
+            animation: smoothRotate calc(var(--uib-speed) * 1.8) linear infinite;
+        }
+        .dot {
+            position: absolute; top: 0; left: 0;
+            display: flex; align-items: flex-start; justify-content: center;
+            height: 100%; width: 100%;
+            animation: rotate var(--uib-speed) ease-in-out infinite;
+        }
+        .dot::before {
+            content: ''; height: var(--dot-size); width: var(--dot-size);
+            border-radius: 50%; background-color: var(--uib-color);
+            transition: background-color 0.3s ease;
+        }
+        /* Delay animasi dots */
+        .dot:nth-child(2), .dot:nth-child(2)::before { animation-delay: calc(var(--uib-speed) * -0.835 * 0.5); }
+        .dot:nth-child(3), .dot:nth-child(3)::before { animation-delay: calc(var(--uib-speed) * -0.668 * 0.5); }
+        .dot:nth-child(4), .dot:nth-child(4)::before { animation-delay: calc(var(--uib-speed) * -0.501 * 0.5); }
+        .dot:nth-child(5), .dot:nth-child(5)::before { animation-delay: calc(var(--uib-speed) * -0.334 * 0.5); }
+        .dot:nth-child(6), .dot:nth-child(6)::before { animation-delay: calc(var(--uib-speed) * -0.167 * 0.5); }
+
+        @keyframes rotate { 0% { transform: rotate(0deg); } 65%, 100% { transform: rotate(360deg); } }
+        @keyframes smoothRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* =============================================== */
 
         /* =============================================== */
         /* == UI POLISH (BARU)                          == */
@@ -180,6 +233,14 @@
     </style>
 </head>
 <body>
+  <div id="fullscreen-loader" style="display: none;"> <div class="loader-container"> <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
     <div class="container">
         <div id="login-view">
             <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-bottom: 20px;">
@@ -561,51 +622,53 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
           if(modalTitle) modalTitle.innerText = title;
           if(modalMessage) modalMessage.innerText = message;
           $('#infoModal').modal('show');
-        }
+        }////////////////////////// batas update hri ini
 
         // Fungsi (re)load data dashboard
+        // GANTI TOTAL FUNGSI loadDashboard DENGAN INI
         async function loadDashboard() {
           if (!currentUser) return;
 
-          const loader = document.getElementById('dashboard-loader');
-          const content = document.getElementById('dashboard-content');
+          const loader = document.getElementById('fullscreen-loader'); // Pakai ID loader baru
+          // Kita nggak perlu sembunyiin #dashboard-content lagi karena loader udah nutupin
 
-          // Tampilkan Loader, Sembunyikan Konten
-          if (loader) loader.style.display = 'flex';
-          if (content) content.style.display = 'none';
+          // 1. Tampilkan Loader Fullscreen
+          if (loader) loader.style.display = 'flex'; // Pakai flex
 
-          // Hapus data lama
+          // Hapus data lama (biar bersih sebelum load baru)
           const currentStatusEl = document.getElementById('current-status');
           if(currentStatusEl) { currentStatusEl.innerText = ''; currentStatusEl.className = 'badge badge-secondary'; }
           const monthlyAttEl = document.getElementById('monthly-attendance');
           if(monthlyAttEl) monthlyAttEl.innerHTML = '';
           const historyBodyEl = document.getElementById('history-body');
           if(historyBodyEl) historyBodyEl.innerHTML = '';
+          const streakTextEl = document.getElementById('streak-text');
+          if(streakTextEl) streakTextEl.innerText = 'Memuat streak...'; // Kasih teks loading di streak
 
           try {
+            // 2. Ambil data dashboard
             const dashboardData = await postToAPI({
               action: 'getDashboardData',
               nama: currentUser.nama,
               kelas: currentUser.kelas
             });
 
-            // Update UI
+            // 3. Update UI dengan data baru (ini akan ngisi #dashboard-content)
             updateDashboardUI(dashboardData);
 
-            // Sembunyikan Loader, Tampilkan Konten (HANYA JIKA SUKSES)
-            // Cek dulu dashboardData.success sebelum nampilin konten
+            // 4. SEMBUNYIKAN Loader (HANYA JIKA SUKSES)
             if (dashboardData.success) {
                 if (loader) loader.style.display = 'none';
-                if (content) content.style.display = 'block';
             } else {
-                 if (loader) loader.style.display = 'none'; // Sembunyikan loader walau gagal
-                 // Mungkin tampilkan pesan error di konten?
+                // Jika gagal load data, loader tetap disembunyikan
+                if (loader) loader.style.display = 'none';
             }
 
           } catch (err) {
             console.error('Gagal memuat dashboard:', err);
             showInfoModal('Gagal', 'Gagal mengambil data dashboard: ' + err.message, false);
-            if (loader) loader.style.display = 'none'; // Sembunyikan loader jika error
+            // Jika ERROR, loader tetap disembunyikan
+            if (loader) loader.style.display = 'none';
           }
         }
 

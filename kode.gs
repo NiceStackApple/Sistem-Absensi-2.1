@@ -1,5 +1,5 @@
 // ============================================
-// KONFIGURASI
+// KONFIGURASI//
 // ============================================
 // kode.gs (Apps Script) — gunakan ContentService untuk JSON murni
 function doGet(e) {
@@ -880,4 +880,5 @@ function setupTriggerAlpha() {
     .create();
   
   Logger.log("Trigger untuk Alpha otomatis berhasil dibuat.");
+
 }

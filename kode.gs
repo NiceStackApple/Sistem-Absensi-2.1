@@ -87,9 +87,9 @@ const CONFIG = {
   MASTER_SHEET: "Master data",
   LOG_SHEET: "Log Absensi",
   QR_SECRET_KEY: "ABSENSI-ROBOTIC-06102025",
-  DRIVE_FOLDER_ID: "1dbS9ZchAlOKUxyseTfNnaeklpVzNOddh",
+  DRIVE_FOLDER_ID: "ISI DENGAN ID FOLDER DRIVEMU",
   TEMPLATE_SHEET: "Template - Absensi Bulanan",
-  DRIVE_HADIR_FOLDER_ID: "1UVOKVZj-AniWhHokyQ9RFKyuQEWDNIsY"
+  DRIVE_HADIR_FOLDER_ID: "ISI DENGAN FOLDER DRIVEMU"
 };
 
 // ============================================
@@ -882,3 +882,4 @@ function setupTriggerAlpha() {
   Logger.log("Trigger untuk Alpha otomatis berhasil dibuat.");
 
 }
+

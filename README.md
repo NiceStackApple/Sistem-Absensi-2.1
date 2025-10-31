@@ -37,7 +37,7 @@ Ikuti langkah-langkah ini dengan teliti.
 ### Bagian 1: Setup Backend (Google)
 
 1.  **Duplikat Google Sheet:**
-    * Klik link ini: **[MASUKKAN LINK DUPLIKAT GOOGLE SHEET LO DI SINI]**
+    * Klik link ini: **[https://docs.google.com/spreadsheets/d/1DpGkZ4ssLeoIFsv6ivQLD6LylLfgB0m1DJOKlUvTzN0/edit?usp=sharing]**
     * Klik "Make a copy". Ini akan menyalin sheet `Master Data`, `Log Absensi`, dan `Template - Absensi Bulanan` ke Google Drive Anda.
 
 2.  **Buat Folder Google Drive:**

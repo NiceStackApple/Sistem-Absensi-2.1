@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbypB0VyQyhTRUK0k6FWANGOjwBjDDn6GGCLXIme-rebEhF-f4RLqNf_mjXYGX9OTmCt/exec";
+  const GAS_URL = "LINK DARI GOOGLE SCRIPT MU DISINI";
 
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");

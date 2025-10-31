@@ -1,4 +1,4 @@
-# 🤖 Aplikasi Absensi Online Robotic (Template)
+# 🤖 Aplikasi Absensi Online (Template)
 
 Ini adalah template lengkap untuk sistem absensi online yang dibangun menggunakan Google Sheets, Apps Script, dan Vercel.
 

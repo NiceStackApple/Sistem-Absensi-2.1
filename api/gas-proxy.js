@@ -1,6 +1,9 @@
-export default async function handler(req, res) {
-  const GAS_URL = "LINK DARI GOOGLE SCRIPT MU DISINI";
+// Ambil URL rahasia dari Vercel Environment Variable
+const GAS_URL = process.env.GAS_URL;
 
+export default async function handler(req, res) {
+  
+  // Ini buat nanganin CORS (biarin aja)
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -9,7 +12,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // kirim ke GAS dengan format JSON juga
     const fetchOptions = {
       method: req.method,
       headers: { "Content-Type": "application/json" },

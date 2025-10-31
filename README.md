@@ -76,32 +76,31 @@ Ikuti langkah-langkah ini dengan teliti.
     * **PENTING:** Salin **Web app URL** yang muncul (yang berakhiran `/exec`).
 
 ### Bagian 2: Setup Frontend (Vercel)
+Metode ini menggunakan Vercel Serverless Function sebagai proxy yang aman, jadi URL Apps Script Anda tidak akan terekspos di GitHub.
 
 1.  **Fork/Clone Repositori Ini:**
-    * Buat repositori GitHub baru Anda sendiri, lalu upload semua file dari template ini (termasuk `index.html` yang Anda ganti dari `cadangan.html`).
+    * Buat repositori GitHub baru Anda sendiri, lalu upload semua file dari template ini.
 
 2.  **Buat File Proxy Vercel (WAJIB):**
-    * Di dalam folder proyek Anda (di komputer lokal), buat file baru bernama `vercel.json`.
-    * Isi file tersebut dengan kode berikut:
-    ```json
-    {
-      "rewrites": [
-        {
-          "source": "/api/gas-proxy",
-          "destination": "URL_WEB_APP_GAS_ANDA"
-        }
-      ]
-    }
-    ```
+    * Di folder API itu adalah jembatan untuk banckend dari GAS kepada Frontend nya
 
-3.  **Edit File Proxy:**
-    * Ganti teks `URL_WEB_APP_GAS_ANDA` di dalam file `vercel.json` dengan **Web app URL** yang Anda dapatkan dari **Bagian 1 Langkah 7**.
-
-4.  **Deploy ke Vercel:**
-    * Push proyek Anda (termasuk `index.html`, `kode.gs`, `README.md`, dan `vercel.json`) ke GitHub.
+3.  **Deploy ke Vercel::**
+    * Push semua file lo (termasuk folder api baru) ke GitHub.
     * Buka Vercel, impor repositori GitHub Anda.
-    * Vercel akan otomatis mendeteksi ini sebagai proyek statis dan mendeploy-nya.
+    * PENTING: Aplikasi lo akan error dulu setelah deploy pertama. Ini normal, karena "rahasia"-nya belum kita masukin.
 
+4.  **Set Environment Variable di Vercel (Langkah Kunci)::**
+    * Buka dashboard proyek lo di Vercel.
+    * Masuk ke tab Settings > Environment Variables.
+    * Buat variabel baru:
+    * `Name`: GAS_URL
+    * `Value`: [PASTE URL WEB APP GOOGLE SCRIPT ANDA DARI BAGIAN 1 LANGKAH 7 DI SINI]
+    * Klik Save.
+  
+5. **Redeploy Aplikasi:**
+    * Setelah di-save, Vercel akan otomatis men-trigger deploy baru.
+    * Jika tidak, masuk ke tab Deployments, cari deploy-an terakhir, klik menu '...' dan pilih Redeploy.
+  
 ### Bagian 3: Setup Selesai
 
 1.  **Buat QR Code:**

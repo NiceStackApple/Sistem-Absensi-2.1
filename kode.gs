@@ -1,5 +1,5 @@
 // ============================================
-// KONFIGURASI//
+// KONFIGURASI
 // ============================================
 // kode.gs (Apps Script) — gunakan ContentService untuk JSON murni
 function doGet(e) {
@@ -87,9 +87,9 @@ const CONFIG = {
   MASTER_SHEET: "Master data",
   LOG_SHEET: "Log Absensi",
   QR_SECRET_KEY: "ABSENSI-ROBOTIC-06102025",
-  DRIVE_FOLDER_ID: "ISI DENGAN ID FOLDER DRIVEMU",
+  DRIVE_FOLDER_ID: "1dbS9ZchAlOKUxyseTfNnaeklpVzNOddh",
   TEMPLATE_SHEET: "Template - Absensi Bulanan",
-  DRIVE_HADIR_FOLDER_ID: "ISI DENGAN FOLDER DRIVEMU"
+  DRIVE_HADIR_FOLDER_ID: "1UVOKVZj-AniWhHokyQ9RFKyuQEWDNIsY"
 };
 
 // ============================================
@@ -188,7 +188,7 @@ function calculateStreak(nama, kelas) {
                   foundCurrentWeekEntry = true;
                   if (streak < 0) streak = 0;
                   Logger.log(`    -> Izin. Streak jadi ${streak}.`);
-              } else if (logStatus.toLowerCase().includes("libur") || logStatus.toLowerCase().includes("acara")) {
+              } else if (logStatus.toLowerCase().includes("libur")) {
                   foundCurrentWeekEntry = true;
                   Logger.log(`    -> Libur/Acara. Streak tetap ${streak}. Lanjut cek minggu sebelumnya.`);
                   continue;
@@ -324,17 +324,20 @@ function getDashboardData(nama, kelas) {
     const cleanStatus = (s) => {
       if (!s || s.toString().trim() === "") return "-";
       const status = s.toString().trim();
-      // --- TAMBAHAN BARU ---
-      // Cek dulu apakah diawali "Hadir"
+
       if (status.startsWith("Hadir")) {
-        return "Hadir"; // Langsung return "Hadir"
+        return "Hadir"; // Ngenalin "Hadir" & "Hadir, [link]"
       }
-      // --- AKHIR TAMBAHAN ---
-      // Pastikan dia ngecek 'libur' atau 'acara' SEBELUM return 'Izin'
-      if (status === "Hadir" || status === "Alpha" || status === "-" || status.toLowerCase().includes("libur") || status.toLowerCase().includes("acara")) {
-        return status; // Kembalikan teks asli ("Libur man")
+      if (status === "Alpha" || status === "-") {
+        return status; // Status bersih
       }
-      return "Izin"; // Hanya return "Izin" kalau bukan status di atas
+      // Pengecekan case-sensitive (harus "Libur" atau "Acara")
+      if (status.includes("Libur")) {
+        return status; // Ngenalin "Libur hari santri"
+      }
+
+      // Fallback: Kalau bukan semua di atas (termasuk "Izin" atau "(...acara...)")
+      return "Izin"; 
     };
 
     const monthlyAttendanceData = [
@@ -880,6 +883,4 @@ function setupTriggerAlpha() {
     .create();
   
   Logger.log("Trigger untuk Alpha otomatis berhasil dibuat.");
-
 }
-

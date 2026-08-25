@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>//frontend untuk absesi nya, deploy di vercel
+<html>
 <head>
     <base target="_top">
     <title>Sistem Absensi Robotic</title>
@@ -11,14 +11,29 @@
     <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
     <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
     
-
     <style>
         /* =============================================== */
-        /* == STYLE DASAR & TAMPILAN MOBILE             == */
+        /* == STYLE DASAR & BACKGROUND PARALLAX         == */
         /* =============================================== */
         body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', sans-serif; /* Font default biar lebih modern */
+            background-color: #f8f9fa; 
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Layer Background Fixed (Anti-Jumping di HP) */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            height: 100vh; 
+            height: 100lvh; /* Support browser modern HP */
+            z-index: -1;
+            background: url('bg-robotic.png') no-repeat center center;
+            background-size: cover;
+            will-change: transform;
         }
 
         .container {
@@ -29,221 +44,197 @@
             margin-left: auto;
         }
 
-        #login-view { margin-top: 20px; }
-        #dashboard-view { display: none; }
         /* =============================================== */
-        /* == STYLE LOADER FULLSCREEN (BARU)            == */
+        /* == LOGIKA TAMPILAN (LOGIN VS DASHBOARD)      == */
         /* =============================================== */
-        #fullscreen-loader {
-            position: fixed; /* Tetap di layar saat scroll */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8); /* Background putih transparan */
-            display: flex; /* Pakai flexbox buat centering */
-            justify-content: center;
-            align-items: center;
-            z-index: 9999; /* Pastikan di atas semua elemen lain */
-            backdrop-filter: blur(5px); /* Efek blur (opsional) */
-            -webkit-backdrop-filter: blur(5px); /* Untuk Safari */
+        #login-view {
+            min-height: 90vh; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Tengah Vertikal */
+            align-items: center;     /* Tengah Horizontal */
         }
 
-        /* CSS Loader Dots dari KODE LU (ganti .container jadi .loader-container) */
-        .loader-container {
-            --uib-size: 60px; /* Ukuran bisa disesuaikan */
-            --uib-color: #007bff; /* Warna biru Bootstrap */
-            --uib-speed: 1.5s;
-            --dot-size: calc(var(--uib-size) * 0.17);
+        #login-view .card, #login-view img {
+            width: 100%;
+            max-width: 400px; /* Batasi lebar login biar rapi */
+        }
+
+        #login-view .card {
+            background-color: rgba(255, 255, 255, 0.96); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+        }
+
+        #dashboard-view { 
+            display: none; /* Sembunyi default */
+            padding-top: 20px; 
+        }
+
+        /* =============================================== */
+        /* == STYLE COMPONENTS                          == */
+        /* =============================================== */
+        /* Tombol Logout Smooth */
+        #dashboard-view .btn-danger {
+            border: none; 
+            background-color: #dc3545;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #dashboard-view .btn-danger:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Teks Selamat Datang */
+        #welcome-message {
+            color: #ffffff !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            font-weight: 800;
+        }
+
+        /* Kartu Glassmorphism */
+        .card {
+            background-color: rgba(255, 255, 255, 0.92); 
+            border-radius: 1rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-weight: bold;
+            color: #0d6efd;
+            padding-top: 15px;
+            padding-bottom: 10px;
+        }
+
+        .btn { border-radius: 0.5rem; }
+
+        /* =============================================== */
+        /* == STYLE STATS TOTAL (WIDE VERSION)          == */
+        /* =============================================== */
+        .stat-box {
+            border-radius: 12px !important; /* Radius disamain biar rapi */
+            padding: 15px 10px !important;  /* PADDING KEMBALI DIBESARKAN (10px) */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: none !important;
+            transition: all 0.3s ease;
             position: relative;
+            overflow: hidden;
+            
+            /* KUNCI LEBAR */
+            flex-grow: 1;       /* Menyuruh kotak untuk ngisi ruang kosong */
+            flex-basis: 40%;    /* Di HP minimal lebar 40% (jadi 2 kotak per baris) */
+            min-width: 120px;   /* Batas minimum biar gak gepeng */
+            
             display: flex;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            justify-content: flex-start;
-            height: var(--uib-size);
-            width: var(--uib-size);
+        }
+
+        .stat-box:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1); 
+        }
+
+        /* KUNCI FONT SIZE */
+        .stat-number { 
+            font-size: 1.5rem; /* FONT SIZE DIBESARKAN KEMBALI */
+            font-weight: 800; 
+            margin-bottom: 0px; 
+            line-height: 1.2; 
+        }
+
+        .stat-label { 
+            font-size: 0.75rem; /* FONT LABEL DIBESARKAN KEMBALI */
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            opacity: 0.8; 
+            margin-top: 2px;
+        }
+        
+        /* Warna Tetap Sama */
+        .stat-hadir { background: linear-gradient(135deg, #d1e7dd 0%, #c3e6cb 100%); color: #0f5132; }
+        .stat-izin  { background: linear-gradient(135deg, #fff3cd 0%, #ffecb5 100%); color: #664d03; }
+        .stat-alpha { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #842029; }
+        .stat-libur { background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%); color: #084298; }
+        /* Loader Fullscreen */
+        #fullscreen-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
+        .loader-container {
+            --uib-size: 60px; --uib-color: #007bff; --uib-speed: 1.5s;
+            --dot-size: calc(var(--uib-size) * 0.17);
+            position: relative; display: flex; align-items: center; justify-content: flex-start;
+            height: var(--uib-size); width: var(--uib-size);
             animation: smoothRotate calc(var(--uib-speed) * 1.8) linear infinite;
         }
-        .dot {
-            position: absolute; top: 0; left: 0;
-            display: flex; align-items: flex-start; justify-content: center;
-            height: 100%; width: 100%;
-            animation: rotate var(--uib-speed) ease-in-out infinite;
-        }
-        .dot::before {
-            content: ''; height: var(--dot-size); width: var(--dot-size);
-            border-radius: 50%; background-color: var(--uib-color);
-            transition: background-color 0.3s ease;
-        }
-        /* Delay animasi dots */
+        .dot { position: absolute; top: 0; left: 0; display: flex; align-items: flex-start; justify-content: center; height: 100%; width: 100%; animation: rotate var(--uib-speed) ease-in-out infinite; }
+        .dot::before { content: ''; height: var(--dot-size); width: var(--dot-size); border-radius: 50%; background-color: var(--uib-color); transition: background-color 0.3s ease; }
         .dot:nth-child(2), .dot:nth-child(2)::before { animation-delay: calc(var(--uib-speed) * -0.835 * 0.5); }
         .dot:nth-child(3), .dot:nth-child(3)::before { animation-delay: calc(var(--uib-speed) * -0.668 * 0.5); }
         .dot:nth-child(4), .dot:nth-child(4)::before { animation-delay: calc(var(--uib-speed) * -0.501 * 0.5); }
         .dot:nth-child(5), .dot:nth-child(5)::before { animation-delay: calc(var(--uib-speed) * -0.334 * 0.5); }
         .dot:nth-child(6), .dot:nth-child(6)::before { animation-delay: calc(var(--uib-speed) * -0.167 * 0.5); }
-
         @keyframes rotate { 0% { transform: rotate(0deg); } 65%, 100% { transform: rotate(360deg); } }
         @keyframes smoothRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* =============================================== */
 
-        /* =============================================== */
-        /* == UI POLISH (BARU)                          == */
-        /* =============================================== */
-
-        /* Bikin kartu jadi "halus" */
-        .card {
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: none;
-        }
-
-        /* Halusin tombol */
-        .btn {
-            border-radius: 0.5rem;
-        }
-
-        /* Tombol Pill Minimalis */
-        .btn-pill {
-            border-radius: 50rem;
-            padding: 0.3rem 0.85rem; /* Padding atas-bawah dikecilin */
-            font-size: 0.875rem;
-            font-weight: 600;
-            white-space: normal; /* Biar bisa wrap text */
-            line-height: 1.4; /* Jarak antar baris kalau wrap */
-            text-align: center;
-            display: inline-block; /* Agar width-nya pas */
-            min-width: 60px; /* Lebar minimum biar nggak aneh */
-        }
-        /* CSS BARU UNTUK GRID STATUS MINGGUAN */
-        #monthly-attendance {
-            display: flex; /* Aktifkan Flexbox */
-            flex-wrap: wrap; /* Biar bisa turun baris */
-            gap: 10px; /* Jarak antar kotak */
-            padding-left: 15px; /* Biar rata kiri */
-            padding-right: 15px;
-        }
-        .week-status-item {
-            background-color: #e9ecef; /* Background abu-abu muda */
-            padding: 8px 12px;
-            border-radius: 0.5rem; /* Sudut tumpul */
-            font-size: 0.9rem;
-            flex-grow: 1; /* Biar lebarnya fleksibel */
-            text-align: center; /* Teks di tengah */
-            min-width: 120px; /* Lebar minimum per kotak */
-        }
-        /* CSS BARU UNTUK RUNNING TEXT MODERN */
-        .running-text-wrapper {
-            overflow: hidden;      /* Sembunyikan teks yg keluar box */
-            white-space: nowrap;   /* Pastikan teks 1 baris */
-            position: relative;    /* Diperlukan untuk animasi */
-        }
-        .running-text-content {
-            display: inline-block; /* Agar bisa dianimasikan */
-            padding-left: 100%;    /* Mulai dari luar layar kanan */
-            animation: marquee-scroll 15s linear infinite; /* Terapkan animasi */
-        }
-
-        /* Definisi Animasinya */
-        @keyframes marquee-scroll {
-            0%   { transform: translateX(0); }     /* Mulai dari kanan */
-            100% { transform: translateX(-100%); } /* Selesai di kiri */
-        }
-
-        /* Hentikan animasi saat di-hover (opsional) */
-        .running-text-wrapper:hover .running-text-content {
-            animation-play-state: paused;
-        }
-
-        /* Style Tabel Admin (Clean) */
-        #sheet-viewer-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            background-color: #ffffff;
-        }
-        #sheet-viewer-table th {
-            background-color: #198754; /* Header Hijau Tua */
-            color: #ffffff;
-            text-align: left;
-            padding: 12px 16px;
-            font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 0.3px;
-        }
-        #sheet-viewer-table td {
-            padding: 8px 16px; /* Padding sel dikecilin */
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-            color: #333333;
-            transition: background-color 0.2s ease;
-            vertical-align: middle; /* Biar tombol pill di tengah */
-        }
+        /* Utilities Lainnya */
+        .btn-pill { border-radius: 50rem; padding: 0.3rem 0.85rem; font-size: 0.875rem; font-weight: 600; white-space: normal; line-height: 1.4; text-align: center; display: inline-block; min-width: 60px; }
+        #monthly-attendance { display: flex; flex-wrap: wrap; gap: 10px; padding-left: 15px; padding-right: 15px; }
+        .week-status-item { background-color: #e9ecef; padding: 8px 12px; border-radius: 0.5rem; font-size: 0.9rem; flex-grow: 1; text-align: center; min-width: 120px; }
+        .running-text-wrapper { overflow: hidden; white-space: nowrap; position: relative; }
+        .running-text-content { display: inline-block; padding-left: 100%; animation: marquee-scroll 15s linear infinite; }
+        @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        
+        #sheet-viewer-table { width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); background-color: #ffffff; }
+        #sheet-viewer-table th { background-color: #198754; color: #ffffff; text-align: left; padding: 12px 16px; font-weight: 600; font-size: 14px; letter-spacing: 0.3px; }
+        #sheet-viewer-table td { padding: 8px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333; transition: background-color 0.2s ease; vertical-align: middle; }
         #sheet-viewer-table tr:hover td { background-color: #f8faff; }
-        #sheet-viewer-table tr:last-child td { border-bottom: none; }
-
-        /* Modal Detail Simpel */
+        
         #detailModal .modal-body { text-align: center; }
-        #detailModal #detail-text {
-            font-size: 1.5rem; /* Font besar */
-            font-weight: bold;
-            padding: 20px;
-            border-radius: 8px;
-            background-color: transparent; /* Hapus background pre */
-            border: none; /* Hapus border pre */
-            white-space: normal; /* Biar wrap */
-        }
+        #detailModal #detail-text { font-size: 1.5rem; font-weight: bold; padding: 20px; border-radius: 8px; background-color: transparent; border: none; white-space: normal; }
 
-        /* =============================================== */
-        /* -- Style Footer -- */
         .footer-custom {
-            background-color: #212529; color: #adb5bd;
-            padding-top: 2rem; padding-bottom: 1rem; margin-top: 3rem;
-            border-radius: 0.75rem 0.75rem 0 0;
+            background-color: #212529; color: #adb5bd; padding-top: 2rem; padding-bottom: 1rem; margin-top: 3rem; border-radius: 0.75rem 0.75rem 0 0;
+            background-color: rgba(33, 37, 41, 0.9); backdrop-filter: blur(5px);
         }
         .footer-custom h5 { color: #ffffff; }
         .footer-custom a { color: #adb5bd; text-decoration: none; }
         .footer-custom a:hover { color: #ffffff; text-decoration: underline; }
         .footer-custom hr { border-top: 1px solid #495057; }
-        .footer-custom .row > div { margin-bottom: 1.5rem; }
 
-        /* =============================================== */
-        /* == ATURAN RESPONSIVE                         == */
-        /* =============================================== */
         @media (max-width: 768px) {
-            #sheet-viewer-table th, #sheet-viewer-table td {
-                padding: 10px 12px;
-                font-size: 13px;
-            }
-            .btn-pill {
-                font-size: 0.8rem;
-                padding: 0.25rem 0.7rem;
-            }
+            #sheet-viewer-table th, #sheet-viewer-table td { padding: 10px 12px; font-size: 13px; }
+            .btn-pill { font-size: 0.8rem; padding: 0.25rem 0.7rem; }
         }
         @media (min-width: 768px) { .container { max-width: 720px; } }
         @media (min-width: 992px) { .container { max-width: 960px; } }
         @media (min-width: 1200px) { .container { max-width: 1140px; } }
 
-        /* CSS BARU UNTUK EFEK GLOW API STREAK */
-    #streak-animation dotlottie-wc[style*="display: block"] { /* Target animasi yg lagi tampil */
-    filter: drop-shadow(0 0 10px rgba(255, 100, 0, 0.6)); /* Efek glow oranye */
-    /* Alternatif: Pakai box-shadow kalau drop-shadow nggak cocok */
-    /* box-shadow: 0 0 15px 5px rgba(255, 100, 0, 0.5); */
-}
+        #streak-animation dotlottie-wc[style*="display: block"] { filter: drop-shadow(0 0 10px rgba(255, 100, 0, 0.6)); }
     </style>
 </head>
 <body>
-  <div id="fullscreen-loader" style="display: none;"> <div class="loader-container"> <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+    
+    <div id="fullscreen-loader" style="display: none;"> 
+        <div class="loader-container"> 
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
         </div>
     </div>
+
     <div class="container">
+        
         <div id="login-view">
-            <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-bottom: 20px;">
+            <img src="Banner robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-bottom: 20px;">
             <div class="card">
                 <div class="card-header"><h3>Login Absensi Robotic</h3></div>
                 <div class="card-body">
@@ -258,7 +249,7 @@
         </div>
 
         <div id="dashboard-view">
-            <img src="https://raw.githubusercontent.com/NiceStackApple/aset-absensi-robotic/main/Banner%20robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
+            <img src="Banner robotic.jpg" alt="Banner Robotic" style="width: 100%; border-radius: 8px; margin-top: 20px;">
 
             <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
                 <h2 id="welcome-message" style="font-size: 1.75rem;">Selamat Datang, Pengguna!</h2>
@@ -266,18 +257,25 @@
             </div>
 
             <div id="running-text-container" class="alert alert-info running-text-wrapper" style="display: none; font-weight: bold; border-radius: 0.5rem; padding-top: 0.8rem; padding-bottom: 0.8rem; overflow: hidden; white-space: nowrap;">
-              <span id="running-text-content" class="running-text-content"></span> </div>
+              <span id="running-text-content" class="running-text-content"></span> 
+            </div>
             
-                  <div id="streak-card" class="card mb-4" style="display: block;"> <div class="card-body">
-                      <div class="row align-items-center"> <div class="col-auto" id="streak-animation-container"> <div id="streak-animation" style="position: relative;"> <dotlottie-wc id="streak-level-1" src="https://lottie.host/fa4cda5b-9fad-4fe5-a0d2-684a9511be50/iSZVq0i9Es.lottie" style="width: 145px; height: 95px; display: none;" autoplay loop></dotlottie-wc>
-                            <dotlottie-wc id="streak-level-2" src="https://lottie.host/5c7aa082-e1c9-48c0-9f7f-f44715fd623a/gA7S2uW1fh.lottie" style="width: 145px; height: 95px; display: none;" autoplay loop></dotlottie-wc>
-                            <dotlottie-wc id="streak-level-3" src="https://lottie.host/0852df83-1f88-4bea-ba1f-b543c97d4c6d/ghOnr8XNcu.lottie" style="width: 145px; height: 95px; display: none;" autoplay loop></dotlottie-wc>
+            <div id="streak-card" class="card mb-4" style="display: block;"> 
+                <div class="card-body">
+                    <div class="row align-items-center"> 
+                        <div class="col-auto" id="streak-animation-container"> 
+                            <div id="streak-animation" style="position: relative;"> 
+                                <dotlottie-wc id="streak-level-1" src="https://lottie.host/fa4cda5b-9fad-4fe5-a0d2-684a9511be50/iSZVq0i9Es.lottie" style="width: 145px; height: 95px; display: none;" autoplay loop></dotlottie-wc>
+                                <dotlottie-wc id="streak-level-2" src="https://lottie.host/5c7aa082-e1c9-48c0-9f7f-f44715fd623a/gA7S2uW1fh.lottie" style="width: 145px; height: 95px; display: none;" autoplay loop></dotlottie-wc>
+                                <dotlottie-wc id="streak-level-3" src="https://lottie.host/0852df83-1f88-4bea-ba1f-b543c97d4c6d/ghOnr8XNcu.lottie" style="width: 145px; height: 95px; display: none;" autoplay loop></dotlottie-wc>
+                            </div>
+                        </div>
+                        <div class="col"> 
+                            <h5 id="streak-text" class="mb-0" style="font-weight: bold; text-align: left;">Memuat streak...</h5> 
                         </div>
                     </div>
-                    <div class="col"> <h5 id="streak-text" class="mb-0" style="font-weight: bold; text-align: left;">Memuat streak...</h5> </div>
                 </div>
             </div>
-        </div>
 
             <div class="card mb-4">
                 <div class="card-header">Menu Aksi</div>
@@ -288,27 +286,30 @@
             </div>
 
             <div id="admin-panel" class="card mb-4" style="display: none; border: 2px solid #dc3545;">
-              <div class="card-header bg-danger text-white">
-                Panel Admin
-              </div>
+              <div class="card-header bg-danger text-white">Panel Admin</div>
               <div class="card-body">
                 <form id="running-text-form" class="mb-3">
-                   <div class="form-group">
-                     <label for="running-text-input"><b>Buat Pengumuman</b> (Kosongkan untuk menghapus):</label>
-                     <input type="text" class="form-control" id="running-text-input" placeholder="Tulis pengumuman di sini...">
-                   </div>
-                   <button type="button" id="set-running-text-btn" class="btn btn-primary btn-block">Set Pengumuman</button>
+                  <div class="form-group">
+                    <label for="running-text-input"><b>Buat Pengumuman (Running Text)</b>:</label>
+                    <input type="text" class="form-control" id="running-text-input" placeholder="Tulis pengumuman...">
+                  </div>
+                  <button type="button" id="set-running-text-btn" class="btn btn-primary btn-block mb-3">Set Pengumuman</button>
+                  
+                  <div class="form-group border-top pt-3">
+                    <label for="camera-msg-input"><b>Pesan Penyemangat di Kamera</b>:</label>
+                    <input type="text" class="form-control" id="camera-msg-input" placeholder="Contoh: 90% orang gak bisa nafas sambil senyum">
+                    <small class="text-muted">Pesan ini muncul di atas kamera saat user absen hadir.</small>
+                  </div>
+                  <button type="button" id="set-camera-msg-btn" class="btn btn-info btn-block">Set Pesan Kamera</button>
                 </form>
-
                 <hr>
-
                 <form id="admin-form">
                   <div class="form-group">
                     <label for="alasan-libur"><b>Atur Status Libur Mingguan</b> (Wajib diisi):</label>
-                    <input type="text" class="form-control" id="alasan-libur" placeholder="Contoh: Libur Hari Santri (Pastikan ada kata 'Libur' atau 'Acara')" required>
+                    <input type="text" class="form-control" id="alasan-libur" placeholder="Contoh: Libur Hari Santri (Pastikan ada kata 'Libur')" required>
                   </div>
                   <div class="form-group">
-                    <label for="target-week"><b>Set status untuk minggu ke:</b></label>
+                    <label for="target-week"><b>Cabut status/set libur untuk minggu ke:</b></label>
                     <select class="form-control" id="target-week" required>
                       <option value="1">Minggu 1</option>
                       <option value="2">Minggu 2</option>
@@ -316,24 +317,65 @@
                       <option value="4">Minggu 4</option>
                       <option value="5">Minggu 5</option>
                     </select>
+                    <label for="month-option"><b>Pilih Bulan Target:</b></label>
+                    <select class="form-control" id="month-option">
+                      <option value="-1">Bulan Kemarin (Revisi)</option>
+                      <option value="0" selected>Bulan Ini (Default)</option>
+                      <option value="1">Bulan Depan (Persiapan)</option>
+                    </select>
                   </div>
+
                   <button type="button" id="set-libur-btn" class="btn btn-warning">Set Status Libur</button>
                   <button type="button" id="revoke-libur-btn" class="btn btn-danger float-right">Cabut Status (Reset ke "-")</button>
+                  <button type="button" id="manual-alpha-btn" class="btn btn-danger btn-block mt-2">Tandai Semua '-' Jadi Alpha (Manual)</button>
+                  <button type="button" id="recalc-streak-btn" class="btn btn-warning btn-block mt-2">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:none;" id="recalc-loader"></span>
+                    🔄 Refresh Streak
+                  </button>
                 </form>
-
                 <hr>
-
                 <div class="mt-3">
-                   <h5>Penampil Sheet (<span id="sheet-name-viewer">-</span>)</h5>
-                   <button type="button" id="refresh-sheet-btn" class="btn btn-info btn-sm mb-2">
-                     <span id="refresh-loader" class="spinner-border spinner-border-sm" role="status" style="display: none;"></span>
-                     Tampilkan/Refresh Data Sheet
-                   </button>
-                   <div id="sheet-viewer-container" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                     <p id="sheet-viewer-placeholder">Klik tombol di atas untuk memuat data...</p>
-                     <table id="sheet-viewer-table" class="table table-bordered table-sm" style="display: none;">
-                       </table>
-                   </div>
+                  <h5>Penampil Sheet (Laporan Bulanan)</h5>
+                  
+                  <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="sheet-selector" class="mb-0"><small>Pilih Laporan:</small></label>
+                        <button type="button" id="refresh-sheet-list-btn" class="btn btn-sm btn-outline-secondary" style="padding: 0px 8px; font-size: 0.75rem;" title="Muat ulang daftar bulan">
+                            ↻ Refresh List
+                        </button>
+                    </div>
+                    
+                    <div class="input-group">
+                        <select class="form-control" id="sheet-selector">
+                          <option value="">Klik Refresh jika kosong...</option>
+                        </select>
+                        <div class="input-group-append">
+                          <button class="btn btn-primary" type="button" id="load-sheet-btn">Buka Sheet</button>
+                        </div>
+                    </div>
+                  </div>
+
+                  <p class="mb-2"><small>Sheet yang sedang tampil: <strong id="sheet-name-viewer" class="text-primary">...</strong></small></p>
+                  
+                  <div id="sheet-viewer-container" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <p id="sheet-viewer-placeholder">Pilih bulan di atas lalu klik Buka Sheet.</p>
+                    <table id="sheet-viewer-table" class="table table-bordered table-sm" style="display: none;"></table>
+                  </div>
+                </div>
+                <hr> 
+                <div class="mt-3">
+                  <h5>Manajemen Akun (Master Data)</h5>
+                  <button type="button" id="refresh-user-list-btn" class="btn btn-info btn-sm mb-2">Tampilkan Daftar User</button>
+                  <button type="button" id="tambah-user-btn" class="btn btn-success btn-sm mb-2 float-right">+ Tambah User Baru</button>
+                  <div id="user-list-loader" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status"></div><p>Memuat daftar user...</p>
+                  </div>
+                  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table id="user-list-table" class="table table-striped table-sm" style="display: none;">
+                      <thead><tr><th>Nama</th><th>Kelas</th><th>Password</th><th>Aksi</th></tr></thead>
+                      <tbody id="user-list-body"></tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -341,13 +383,44 @@
             <div class="card mb-4">
                 <div class="card-header">Status Absensi Bulan Ini (<span id="current-month"></span>)</div>
                 <div class="card-body">
-                    <p>Minggu ini (<strong id="current-week"></strong>), status absensi Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p>
-                    <div id="monthly-attendance"></div> </div>
+                    <p>Status absen terakhir Anda: <span id="current-status" class="badge badge-secondary">Memuat...</span></p>
+                    <div id="monthly-attendance"></div> 
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">Total Akumulasi Kehadiran</div>
+                <div class="card-body p-4"> 
+                    <div class="d-flex flex-wrap text-center" style="gap: 12px;">
+                        
+                        <div class="stat-box stat-hadir">
+                            <h5 id="total-hadir" class="stat-number">-</h5>
+                            <div class="stat-label">Hadir</div>
+                        </div>
+
+                        <div class="stat-box stat-izin">
+                            <h5 id="total-izin" class="stat-number">-</h5>
+                            <div class="stat-label">Izin</div>
+                        </div>
+
+                        <div class="stat-box stat-alpha">
+                            <h5 id="total-alpha" class="stat-number">-</h5>
+                            <div class="stat-label">Alpha</div>
+                        </div>
+
+                        <div class="stat-box stat-libur">
+                            <h5 id="total-libur" class="stat-number">-</h5>
+                            <div class="stat-label">Libur</div>
+                        </div>
+
+                    </div>
+                 </div>
             </div>
 
             <div class="card">
                 <div class="card-header">10 Riwayat Absensi Terakhir</div>
-                <div class="card-body table-responsive px-3"> <table class="table table-striped table-sm mb-0">
+                <div class="card-body table-responsive px-3"> 
+                    <table class="table table-striped table-sm mb-0">
                         <thead><tr><th>Waktu</th><th>Status</th><th>Keterangan</th></tr></thead>
                         <tbody id="history-body"></tbody>
                     </table>
@@ -361,22 +434,19 @@
                             <h5>Robotic Man2Kudus</h5>
                             <p style="font-size: 0.9rem;">Sistem Absensi Digital untuk efisiensi dan transparansi pencatatan kehadiran anggota ekstrakurikuler Robotic.</p>
                         </div>
-
                         <div class="col-6 col-md-auto mb-4">
                             <h5>Navigasi</h5>
                             <ul class="list-unstyled">
                                 <li><a href="https://discord.gg/amyxcGrZUx" target="_blank" rel="noopener noreferrer">Gabung Discord</a></li>
                             </ul>
                         </div>
-
                         <div class="col-6 col-md-auto mb-4">
                             <h5>Info Kontak</h5>
                             <ul class="list-unstyled">
-                                <li><a href="https://wa.me/GANTINOWHATSAPP" target="_blank" rel="noopener noreferrer">WhatsApp (CONTACT)</a></li>
+                                <li><a href="https://wa.me/6282327023602" target="_blank" rel="noopener noreferrer">WhatsApp (Seila)</a></li>
                                 <li><a href="https://www.instagram.com/m2k.robotics/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
                             </ul>
                         </div>
-
                         <div class="col-12 col-md-auto mb-4">
                            <h5>Creator</h5>
                            <ul class="list-unstyled">
@@ -390,7 +460,71 @@
                     </div>
                 </div>
             </footer>
+
+        </div> </div> <div class="modal fade" id="overrideChoiceModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Ubah Status</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+          </div>
+          <div class="modal-body">
+            <p>Pilih status baru untuk user ini:</p>
+            <button type="button" id="override-hadir-btn" class="btn btn-success btn-block mb-2">Set !Hadir (perlu foto)</button>
+            <button type="button" id="override-izin-btn" class="btn btn-warning btn-block mb-2">Set !Izin (perlu alasan & foto)</button>
+            <button type="button" id="override-alpha-btn" class="btn btn-danger btn-block">Set !Alpha (langsung)</button>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="userAddModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <form id="user-add-form">
+            <div class="modal-header">
+              <h5 class="modal-title">Tambah User Baru</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group"><label for="nama-add">Nama Lengkap</label><input type="text" class="form-control" id="nama-add" required></div>
+              <div class="form-group"><label for="kelas-add">Kelas</label><input type="text" class="form-control" id="kelas-add" required></div>
+              <div class="form-group"><label for="password-add">Password</label><input type="text" class="form-control" id="password-add" required><small class="form-text text-muted">Untuk Admin, tambahkan "@DM1N" di akhir password.</small></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-primary">Simpan User</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="userEditModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <form id="user-edit-form">
+            <div class="modal-header"><h5 class="modal-title">Edit User</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div>
+            <div class="modal-body">
+              <input type="hidden" id="original-nama-edit">
+              <div class="form-group"><label for="nama-edit">Nama Lengkap</label><input type="text" class="form-control" id="nama-edit" required></div>
+              <div class="form-group"><label for="kelas-edit">Kelas</label><input type="text" class="form-control" id="kelas-edit" required></div>
+              <div class="form-group"><label for="password-edit">Password</label><input type="text" class="form-control" id="password-edit" required></div>
+              <hr>
+              <div id="delete-user-section" style="display: none;">
+                <p class="text-danger">Untuk menghapus user ini, ketik <strong>Hapus</strong> di bawah ini lalu klik Hapus Permanen.</p>
+                <div class="form-group"><label for="user-hapus-konfirmasi">Ketik "Hapus"</label><input type="text" class="form-control" id="user-hapus-konfirmasi" placeholder="Hapus"></div>
+                <button type="button" id="user-hapus-btn-confirm" class="btn btn-danger btn-block">Hapus Permanen User Ini</button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="user-hapus-btn-init" class="btn btn-danger mr-auto">Hapus User</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <div class="modal fade" id="qrModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Scan QR Code Absensi</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button></div><div class="modal-body text-center"> <div id="qr-scan-area">
@@ -398,10 +532,14 @@
         <div id="qr-result" class="mt-3 font-weight-bold">Arahkan kamera ke QR Code...</div>
     </div>
     <div id="hadir-photo-area" style="display: none;">
+        <div id="camera-message-display" class="alert alert-warning text-center font-weight-bold" style="font-size: 1.1rem; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            Senyum dong! 😊
+        </div>
         <p>Silakan ambil foto selfie sebagai bukti kehadiran:</p>
         <video id="hadir-video-preview" width="100%" style="border-radius: 8px;" autoplay playsinline></video>
         <canvas id="hadir-photo-canvas" style="display: none;"></canvas>
         <button type="button" id="hadir-capture-btn" class="btn btn-primary mt-3">Jepret Foto</button>
+        <button type="button" id="toggle-camera-btn" class="btn btn-outline-secondary btn-sm mt-2" style="display: none;">Ganti Kamera</button>
         <p id="hadir-photo-status" class="mt-2 font-weight-bold"></p>
     </div>
 </div></div></div></div>
@@ -416,8 +554,9 @@
             <pre id="detail-text" style="white-space: pre-wrap; word-break: break-all; background-color: transparent; padding: 10px; border: none; text-align: center; font-size: 1.5rem; font-weight: bold;"></pre>
           </div>
           <div class="modal-footer">
+            <button type="button" id="detail-ubah-status-btn" class="btn btn-warning mr-auto">Ubah Status</button>
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-          </div>
+        </div>
         </div>
       </div>
     </div>
@@ -434,7 +573,8 @@
             <br> <a id="preview-link" href="#" target="_blank" rel="noopener noreferrer">Buka di Google Drive</a>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+              <button type="button" id="preview-ubah-status-btn" class="btn btn-warning mr-auto">Ubah Status</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
           </div>
         </div>
       </div>
@@ -482,6 +622,9 @@
 
         const API_URL = "/api/gas-proxy";
         let currentUser = null, html5QrCode = null, capturedImageData = null, stream = null;
+        window.pendingOverrideData = null; // <-- TAMBAH INI
+        let currentFacingMode = 'environment'; // <-- TAMBAH INI (buat toggle kamera)
+        
 
         // --- Definisi Fungsi Global ---
 
@@ -502,6 +645,13 @@
             } else {
               announcementContainer.style.display = 'none';
             }
+            const cameraMsgEl = document.getElementById('camera-message-display');
+            if (data.cameraMessage && data.cameraMessage.trim() !== "") {
+                cameraMsgEl.innerText = data.cameraMessage;
+                cameraMsgEl.style.display = 'block';
+            } else {
+                cameraMsgEl.style.display = 'none'; // Sembunyikan kalau kosong
+            }
 
             // Update Streak
             const streakCard = document.getElementById('streak-card'); // Ganti ID
@@ -514,7 +664,7 @@
             streakAnim1.style.display = 'none'; streakAnim2.style.display = 'none'; streakAnim3.style.display = 'none';
             if (streakCount > 0) {
               // Pakai innerHTML biar bisa masukin tag span
-streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">${streakCount} Minggu!</span>🔥`; // Warna Oranye (#FFA500)
+            streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">${streakCount} Minggu!</span>🔥`; // Warna Oranye (#FFA500)
               if (streakCount >= 10) streakAnim3.style.display = 'block';
               else if (streakCount >= 5) streakAnim2.style.display = 'block';
               else streakAnim1.style.display = 'block';
@@ -525,11 +675,15 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
             // Update Dashboard Utama
             if (data.success) {
                 document.getElementById('current-month').innerText = data.currentMonth;
-                document.getElementById('current-week').innerText = data.currentWeek;
                 const statusBadge = document.getElementById('current-status');
                 const currentStatusLower = data.currentStatus.toLowerCase();
-                statusBadge.innerText = (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'Libur/Acara' : data.currentStatus;
-                statusBadge.className = 'badge ' + (data.currentStatus === 'Hadir' ? 'badge-success' : data.currentStatus === 'Izin' ? 'badge-warning' : (currentStatusLower.includes('libur') || currentStatusLower.includes('acara')) ? 'badge-primary' : 'badge-danger');
+                statusBadge.innerText = (currentStatusLower.includes('libur')) ? 'Libur' : data.currentStatus;
+                let statusClassBadge = 'badge-secondary'; // Default
+                if (data.currentStatus.includes('Hadir')) statusClassBadge = 'badge-success';
+                else if (data.currentStatus.includes('Izin')) statusClassBadge = 'badge-warning';
+                else if (data.currentStatus.includes('Alpha')) statusClassBadge = 'badge-danger';
+                else if (currentStatusLower.includes('libur')) statusClassBadge = 'badge-primary';
+                statusBadge.className = 'badge ' + statusClassBadge;
 
                 // Update Status Mingguan (Flexbox)
                 const monthlyDiv = document.getElementById('monthly-attendance');
@@ -538,10 +692,10 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
                     data.monthlyAttendance.forEach(att => {
                         if (att.status !== '-') {
                             let statusClass = '';
-                            if (att.status === 'Hadir') statusClass = 'text-success';
-                            else if (att.status === 'Izin' || att.status.startsWith('(')) statusClass = 'text-warning';
-                            else if (att.status === 'Alpha') statusClass = 'text-danger';
-                            else if (att.status.toLowerCase().includes('libur') || att.status.toLowerCase().includes('acara')) statusClass = 'text-primary';
+                            if (att.status.includes('Hadir')) statusClass = 'text-success';
+                            else if (att.status.includes('Izin') || att.status.startsWith('(')) statusClass = 'text-warning';
+                            else if (att.status.includes('Alpha')) statusClass = 'text-danger';
+                            else if (att.status.toLowerCase().includes('libur')) statusClass = 'text-primary';
                             else statusClass = 'text-dark';
 
                             monthlyDiv.innerHTML += `
@@ -553,6 +707,12 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
                         }
                     });
                 }
+                if (data.totalStats) {
+                    document.getElementById('total-hadir').innerText = data.totalStats.hadir;
+                    document.getElementById('total-izin').innerText = data.totalStats.izin;
+                    document.getElementById('total-alpha').innerText = data.totalStats.alpha;
+                    document.getElementById('total-libur').innerText = data.totalStats.libur;
+                }
 
                 // Update Riwayat Absensi
                 const historyBody = document.getElementById('history-body');
@@ -560,12 +720,12 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
                 if (data.history && data.history.length > 0) {
                     data.history.forEach(log => {
                         let statusClass = 'badge-secondary';
-                        if (log.status === 'Hadir') statusClass = 'badge-success';
-                        else if (log.status === 'Izin') statusClass = 'badge-warning';
-                        else if (log.status === 'Alpha') statusClass = 'badge-danger';
-                        else if (log.status.toLowerCase().includes('libur') || log.status.toLowerCase().includes('acara')) statusClass = 'badge-primary';
+                        if (log.status.includes('Hadir')) statusClass = 'badge-success';
+                        else if (log.status.includes('Izin')) statusClass = 'badge-warning';
+                        else if (log.status.includes('Alpha')) statusClass = 'badge-danger';
+                        else if (log.status.toLowerCase().includes('libur')) statusClass = 'badge-primary';
                         const logStatusLower = log.status.toLowerCase();
-                        historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${(logStatusLower.includes('libur') || logStatusLower.includes('acara')) ? 'Libur/Acara' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
+                        historyBody.innerHTML += `<tr><td>${log.timestamp}</td><td><span class="badge ${statusClass}">${(logStatusLower.includes('libur')) ? 'Libur' : log.status}</span></td><td style="word-break: break-all;">${log.location}</td></tr>`;
                     });
                 } else {
                     historyBody.innerHTML = '<tr><td colspan="3" class="text-center">Tidak ada riwayat.</td></tr>';
@@ -597,6 +757,7 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
             if(startBtn) startBtn.style.display = 'inline-block';
             const captureBtn = document.getElementById('capture-btn');
             if(captureBtn) captureBtn.style.display = 'none';
+            document.getElementById('toggle-camera-btn').style.display = 'none';
         }
         function stopHadirCamera() {
             const video = document.getElementById('hadir-video-preview');
@@ -739,6 +900,7 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
                   // Tampilkan panel admin JIKA dia admin
                   if (currentUser.isAdmin) {
                     document.getElementById('admin-panel').style.display = 'block';
+                    loadSheetList();
                   }
                 } else {
                   const errorMessage = document.getElementById('error-message');
@@ -767,22 +929,41 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
               submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
 
               try {
-                const result = await postToAPI({
-                  action: 'markIzinFromDashboard',
-                  nama: currentUser.nama,
-                  kelas: currentUser.kelas,
-                  alasan,
-                  imageData: capturedImageData
-                });
-                handleServerResponse(result);
+                  let payload;
+                  // --- LOGIKA BARU: Cek apakah ini override admin ---
+                  if (window.pendingOverrideData) {
+                      payload = {
+                          action: 'adminOverrideIzin',
+                          nama: window.pendingOverrideData.nama,
+                          kelas: window.pendingOverrideData.kelas,
+                          targetWeek: window.pendingOverrideData.week,
+                          alasan: alasan,
+                          imageData: capturedImageData
+                      };
+                  } else {
+                      // Ini alur siswa biasa
+                      payload = {
+                          action: 'markIzinFromDashboard',
+                          nama: currentUser.nama,
+                          kelas: currentUser.kelas,
+                          alasan: alasan,
+                          imageData: capturedImageData
+                      };
+                  }
+
+                  const result = await postToAPI(payload);
+                  handleServerResponse(result); // handleServerResponse akan nutup modal
               } catch (error) {
                 console.error('Error submitting izin:', error);
                 showInfoModal("Error", "Terjadi kesalahan teknis: " + error.message, false);
               } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Kirim Izin';
-              }
+                window.pendingOverrideData = null; // Reset data
+            }
         });
+
+        
 
         // ===================================
         // EVENT LISTENER PANEL ADMIN
@@ -798,9 +979,15 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
 
           const confirmBtn = document.getElementById('confirmModalBtn');
           const confirmMsg = document.getElementById('confirmModalMessage');
-          confirmMsg.innerText = `YAKIN ingin mengubah status SEMUA siswa menjadi "${alasan}"? Ini akan menimpa data minggu ini.`;
-          $('#confirmModal').modal('show');
+          
+          // AMBIL TEKS MINGGU & BULAN
+          const targetWeekText = document.getElementById('target-week').options[document.getElementById('target-week').selectedIndex].text;
+          const targetMonthText = document.getElementById('month-option').options[document.getElementById('month-option').selectedIndex].text; // <--- BARU
 
+          // TAMPILKAN DI PESAN
+          confirmMsg.innerHTML = `YAKIN ingin mengubah status SEMUA siswa di <strong>${targetWeekText} (${targetMonthText})</strong> menjadi <strong>"${alasan}"</strong>? <br>Tindakan ini akan menimpa data yang ada.`;
+          
+          $('#confirmModal').modal('show');
           let countdown = 10;
           confirmBtn.disabled = true;
           confirmBtn.innerText = `Konfirmasi (${countdown})`;
@@ -822,13 +1009,16 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
             showInfoModal("Memproses...", "Sedang mengatur status libur, mohon tunggu...", false);
 
             try {
-              // Ambil nilai minggu dari dropdown
+              // Ambil nilai minggu & bulan dari dropdown
               const targetWeekValue = document.getElementById('target-week').value;
+              const monthOptionValue = document.getElementById('month-option').value; // <--- BARU
+
               const result = await postToAPI({
                 action: 'setHolidayStatus',
                 nama: currentUser.nama,
                 alasanLibur: alasan,
-                targetWeek: targetWeekValue
+                targetWeek: targetWeekValue,
+                monthOption: monthOptionValue // <--- KIRIM KE BACKEND
               });
 
               if (result.success) {
@@ -845,11 +1035,21 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
         });
 
         // Listener Tombol Cabut Status (dengan konfirmasi)
+        // Listener Tombol Cabut Status (dengan konfirmasi)
         document.getElementById('revoke-libur-btn').addEventListener('click', function() {
           const confirmBtn = document.getElementById('confirmModalBtn');
           const confirmMsg = document.getElementById('confirmModalMessage');
-          confirmMsg.innerText = "YAKIN ingin mencabut status? Ini akan me-reset status SEMUA siswa di minggu ini menjadi '-'. Tindakan ini tidak bisa dibatalkan.";
+          
+          // AMBIL TEKS MINGGU & BULAN
+          const targetWeekText = document.getElementById('target-week').options[document.getElementById('target-week').selectedIndex].text;
+          const targetMonthText = document.getElementById('month-option').options[document.getElementById('month-option').selectedIndex].text; // <--- BARU
+
+          // TAMPILKAN DI PESAN
+          confirmMsg.innerHTML = `YAKIN ingin mencabut status di <strong>${targetWeekText} (${targetMonthText})</strong>? <br>Ini akan me-reset status SEMUA siswa menjadi <strong>'-'</strong>. Tindakan ini tidak bisa dibatalkan.`;
+          
           $('#confirmModal').modal('show');
+
+          // ... (lanjut ke logika countdown di bawahnya biarkan saja) ...
 
           let countdown = 10;
           confirmBtn.disabled = true;
@@ -872,12 +1072,15 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
             showInfoModal("Memproses...", "Sedang me-reset status, mohon tunggu...", false);
 
             try {
-              // Ambil nilai minggu dari dropdown (penting!)
+              // Ambil nilai minggu & bulan dari dropdown (penting!)
               const targetWeekValue = document.getElementById('target-week').value;
+              const monthOptionValue = document.getElementById('month-option').value; // <--- BARU
+
               const result = await postToAPI({
                 action: 'revokeHolidayStatus',
                 nama: currentUser.nama,
-                targetWeek: targetWeekValue
+                targetWeek: targetWeekValue,
+                monthOption: monthOptionValue // <--- KIRIM KE BACKEND
               });
 
               if (result.success) {
@@ -894,143 +1097,199 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
         });
 
         // Listener Tombol Refresh Sheet Admin
-        document.getElementById('refresh-sheet-btn').addEventListener('click', async function() {
-          const btn = this;
-          const loader = document.getElementById('refresh-loader');
-          const placeholder = document.getElementById('sheet-viewer-placeholder');
-          const table = document.getElementById('sheet-viewer-table');
-          const sheetNameEl = document.getElementById('sheet-name-viewer');
+        // ==========================================
+        // UPDATE: LOGIKA PENAMPIL SHEET DENGAN DROPDOWN
+        // ==========================================
 
-          btn.disabled = true;
-          loader.style.display = 'inline-block';
-          placeholder.innerText = 'Sedang memuat data...';
-          table.style.display = 'none';
-
-          try {
-            const result = await postToAPI({ action: 'getMonthlySheetData' });
-
-            if (result.success) {
-              placeholder.style.display = 'none';
-              table.style.display = 'table';
-              sheetNameEl.innerText = result.sheetName;
-              table.innerHTML = '';
-
-              // Buat <thead> (Header)
-              const thead = document.createElement('thead');
-              const headerRow = document.createElement('tr');
-              result.headers.forEach(headerText => {
-                if (!headerText) return;
-                const th = document.createElement('th');
-                th.scope = 'col';
-                th.innerText = headerText;
-                headerRow.appendChild(th);
-              });
-              thead.appendChild(headerRow);
-              table.appendChild(thead);
-
-              // Buat <tbody> (Isi Data)
-              const tbody = document.createElement('tbody');
-              result.studentData.forEach(rowData => {
-                const dataRow = document.createElement('tr');
-                rowData.forEach(cellTextRaw => {
-                  const td = document.createElement('td');
-                  if (typeof cellTextRaw === 'undefined' || cellTextRaw === null) {
-                    cellTextRaw = ''; // Handle sel kosong
-                  }
-                  const cellText = cellTextRaw.toString().trim();
-
-                  let cellHtml = '';
-                  let btnClass = '';
-                  let displayText = cellText;
-                  let modalTarget = '#detailModal'; // Modal default (simpel)
-
-                  // Logika Render Pill Semua Status
-                  if (cellText.includes('Hadir')) {
-                    btnClass = 'btn-success';
-                    displayText = 'Hadir';
-                    modalTarget = '#previewModal'; // Pakai modal fancy
-                  }
-                  else if (cellText === 'Alpha') {
-                    btnClass = 'btn-danger';
-                  }
-                  else if (cellText.toLowerCase().includes('libur') || cellText.toLowerCase().includes('acara')) {
-                    btnClass = 'btn-primary';
-                    displayText = 'Libur/Acara';
-                  }
-                  else if (cellText.includes('https://drive.google.com')) {
-                    // Ini adalah status IZIN
-                    btnClass = 'btn-warning';
-                    displayText = 'Izin';
-                    modalTarget = '#previewModal'; // Pakai modal fancy
-                  }
-                  else if (cellText === '-') {
-                     // Untuk '-', JANGAN buat tombol
-                     td.innerText = cellText;
-                     dataRow.appendChild(td);
-                     return; // Lanjut ke sel berikutnya
-                  }
-                  else {
-                    // Untuk teks nama siswa (sel paling kiri)
-                    td.innerText = cellText;
-                    dataRow.appendChild(td);
-                    return; // Lanjut ke sel berikutnya
-                  }
-
-                  // Siapkan data untuk modal (parsing Izin di sini)
-                  let dataAlasan = '';
-                  let dataUrl = '';
-                  let detailText = cellText; // Default untuk modal simpel
-
-                  if (modalTarget === '#previewModal') { // Jika Izin
-                     try {
-                        let textToParse = cellText;
-                        if (cellText.startsWith('(') && cellText.endsWith(')')) {
-                            textToParse = cellText.substring(1, cellText.length - 1);
-                        }
-                        const parts = textToParse.split(',');
-                        dataUrl = parts.pop().trim();
-                        dataAlasan = parts.join(',');
-                        if (!dataUrl.startsWith('https://drive.google.com')) throw new Error();
-                     } catch (e) {
-                        // Jika parsing gagal, fallback ke modal simpel
-                        console.error("Gagal parsing data Izin:", cellText, e);
-                        modalTarget = '#detailModal';
-                        displayText = 'Izin (Err)';
-                        btnClass = 'btn-secondary'; // Ganti warna jadi abu-abu
-                     }
-                  }
-
-                  // Buat tombol pill-nya
-                  cellHtml = `<button type="button"
-                                      class="btn ${btnClass} btn-sm btn-pill"
-                                      data-toggle="modal"
-                                      data-target="${modalTarget}"
-                                      data-detail="${detailText.replace(/"/g, '"')}"
-                                      data-alasan="${dataAlasan.replace(/"/g, '"')}"
-                                      data-url="${dataUrl}">
-                                ${displayText}
-                              </button>`;
-
-                  td.innerHTML = cellHtml;
-                  dataRow.appendChild(td);
-                });
-                tbody.appendChild(dataRow);
-              });
-              table.appendChild(tbody);
-
-            } else {
-              placeholder.style.display = 'block';
-              placeholder.innerText = 'Gagal memuat: ' + result.message;
-              showInfoModal("Gagal", result.message, false);
+        // 1. Fungsi Load Daftar Sheet (Dipanggil saat login admin)
+        async function loadSheetList() {
+            const selector = document.getElementById('sheet-selector');
+            // Jangan reset kalau sudah ada isinya (opsional)
+            
+            try {
+                const result = await postToAPI({ action: 'getAvailableSheets' });
+                if (result.success && result.sheets) {
+                    selector.innerHTML = ''; // Bersihkan
+                    
+                    result.sheets.forEach(sheetName => {
+                        const option = document.createElement('option');
+                        option.value = sheetName;
+                        option.text = sheetName;
+                        selector.appendChild(option);
+                    });
+                    
+                    // Auto select sheet pertama (biasanya bulan terbaru/terlama tergantung sort backend)
+                    if (result.sheets.length > 0) {
+                        selector.value = result.sheets[0];
+                    }
+                } else {
+                    selector.innerHTML = '<option>Gagal memuat list</option>';
+                }
+            } catch (e) {
+                console.error(e);
+                selector.innerHTML = '<option>Error koneksi</option>';
             }
-          } catch (err) {
-            placeholder.style.display = 'block';
-            placeholder.innerText = 'Error: ' + err.message;
-            showInfoModal("Error", err.message, false);
-          } finally {
-            btn.disabled = false;
-            loader.style.display = 'none';
-          }
+        }
+        // Listener Tombol "Refresh List" (Tombol Kecil)
+        document.getElementById('refresh-sheet-list-btn').addEventListener('click', function() {
+            const btn = this;
+            // Efek loading visual (puter-puter icon kalau mau, atau ganti teks)
+            const originalText = btn.innerText;
+            btn.innerText = 'Memuat...';
+            btn.disabled = true;
+
+            // Panggil fungsi loadSheetList, lalu balikin tombol setelah selesai
+            loadSheetList().then(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }).catch(() => {
+                btn.innerText = 'Gagal';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            });
+        });
+
+        // 2. Listener Tombol "Buka Sheet" (Pengganti Refresh)
+        document.getElementById('load-sheet-btn').addEventListener('click', async function() {
+              const btn = this;
+              const selector = document.getElementById('sheet-selector');
+              const selectedSheet = selector.value; // Ambil nilai dari dropdown
+              
+              const placeholder = document.getElementById('sheet-viewer-placeholder');
+              const table = document.getElementById('sheet-viewer-table');
+              const sheetNameEl = document.getElementById('sheet-name-viewer');
+
+              if (!selectedSheet) {
+                  showInfoModal("Info", "Mohon pilih bulan terlebih dahulu.", false);
+                  return;
+              }
+
+              btn.disabled = true;
+              btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memuat...';
+              placeholder.innerText = 'Sedang memuat data...';
+              placeholder.style.display = 'block'; // Tampilkan placeholder loading
+              table.style.display = 'none';
+
+              try {
+                // Request ke backend dengan parameter sheetName
+                const result = await postToAPI({ 
+                    action: 'getMonthlySheetData',
+                    sheetName: selectedSheet 
+                });
+
+                if (result.success) {
+                  placeholder.style.display = 'none';
+                  table.style.display = 'table';
+                  sheetNameEl.innerText = result.sheetName;
+                  table.innerHTML = '';
+
+                  // Buat <thead> (Header)
+                  const thead = document.createElement('thead');
+                  const headerRow = document.createElement('tr');
+                  result.headers.forEach(headerText => {
+                    if (!headerText) return;
+                    const th = document.createElement('th');
+                    th.scope = 'col';
+                    th.innerText = headerText;
+                    headerRow.appendChild(th);
+                  });
+                  thead.appendChild(headerRow);
+                  table.appendChild(thead);
+
+                  // Buat <tbody> (Isi Data)
+                  const tbody = document.createElement('tbody');
+                  
+                  result.studentData.forEach(rowData => { 
+                    const dataRow = document.createElement('tr');
+                    const namaSiswa = rowData[0];
+                    const kelasSiswa = rowData[1];
+
+                    for (let i = 0; i < rowData.length; i++) {
+                      const cellTextRaw = rowData[i];
+                      const td = document.createElement('td');
+                      if (typeof cellTextRaw === 'undefined' || cellTextRaw === null) { cellTextRaw = ''; }
+                      const cellText = cellTextRaw.toString().trim();
+
+                      // Hitung targetMinggu (i=0 -> Nama, i=1 -> Kelas, i=2 -> Minggu 1)
+                      const targetWeek = i - 1; 
+
+                      // --- LOGIKA RENDER TOMBOL PILL (Sama persis dengan sebelumnya) ---
+                      let cellHtml = '';
+                      let btnClass = '';
+                      let displayText = cellText;
+                      let modalTarget = '#detailModal'; 
+                      let dataAlasan = '';
+                      let dataUrl = '';
+                      let detailText = cellText;
+
+                      if (cellText.includes('https://drive.google.com')) {
+                          modalTarget = '#previewModal'; 
+                          try {
+                              if (cellText.startsWith("Hadir,")) { 
+                                  btnClass = 'btn-success'; displayText = 'Hadir';
+                                  dataUrl = cellText.split(',')[1].trim(); dataAlasan = 'Hadir'; 
+                              } else if (cellText.includes ('!Hadir')) {
+                                  btnClass = 'btn-success'; displayText = '!Hadir';
+                                  dataUrl = cellText.split(',')[1].trim(); dataAlasan = 'Hadir (Admin)';
+                              } else if (cellText.includes('!Izin')) {
+                                  btnClass = 'btn-warning'; displayText = '!Izin';
+                                  let text = cellText.startsWith('(') ? cellText.substring(1, cellText.length-1) : cellText;
+                                  const parts = text.split(','); dataUrl = parts.pop().trim(); dataAlasan = parts.join(',');
+                              } else { 
+                                  btnClass = 'btn-warning'; displayText = 'Izin';
+                                  let text = cellText.startsWith('(') ? cellText.substring(1, cellText.length-1) : cellText;
+                                  const parts = text.split(','); dataUrl = parts.pop().trim(); dataAlasan = parts.join(',');
+                              } 
+                          } catch (e) {
+                              modalTarget = '#detailModal'; displayText = 'Error'; btnClass = 'btn-secondary';
+                          }
+
+                      } else if (i === 0 || i === 1) { 
+                          td.innerText = cellText; dataRow.appendChild(td); continue; 
+                      } else if (cellText === '!Alpha') {
+                          btnClass = 'btn-danger'; displayText = '!Alpha';
+                      } else if (cellText === 'Alpha') {
+                          btnClass = 'btn-danger';
+                      } else if (cellText.toLowerCase().includes('libur')) {
+                          btnClass = 'btn-primary'; displayText = 'Libur';
+                      } else if (cellText === '-') {
+                          td.innerText = cellText; dataRow.appendChild(td); continue;
+                      } else {
+                          td.innerText = cellText; dataRow.appendChild(td); continue;
+                      }
+
+                      cellHtml = `<button type="button" class="btn ${btnClass} btn-sm btn-pill"
+                                          data-toggle="modal" data-target="${modalTarget}"
+                                          data-detail="${detailText.replace(/"/g, '"')}"
+                                          data-alasan="${dataAlasan.replace(/"/g, '"')}"
+                                          data-url="${dataUrl}"
+                                          data-nama="${namaSiswa.replace(/"/g, '"')}"
+                                          data-kelas="${kelasSiswa.replace(/"/g, '"')}"
+                                          data-week="${targetWeek}">
+                                    ${displayText}
+                                  </button>`;
+                      td.innerHTML = cellHtml;
+                      dataRow.appendChild(td);
+                    } 
+                    tbody.appendChild(dataRow);
+                  }); 
+                  table.appendChild(tbody);
+
+                } else {
+                  placeholder.style.display = 'block';
+                  placeholder.innerText = 'Gagal memuat: ' + result.message;
+                  showInfoModal("Gagal", result.message, false);
+                }
+              } catch (err) {
+                placeholder.style.display = 'block';
+                placeholder.innerText = 'Error: ' + err.message;
+                showInfoModal("Error", err.message, false);
+              } finally {
+                btn.disabled = false;
+                btn.innerText = 'Buka Sheet'; // Reset teks tombol
+              }
         });
 
         // Listener Tombol Set Pengumuman
@@ -1069,6 +1328,429 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
           }
         });
 
+        // Listener Tombol Set Pesan Kamera (BARU)
+        document.getElementById('set-camera-msg-btn').addEventListener('click', async function() {
+          const btn = this;
+          const text = document.getElementById('camera-msg-input').value;
+
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+
+          try {
+            const result = await postToAPI({
+              action: "setCameraMessage",
+              nama: currentUser.nama,
+              text: text
+            });
+
+            if (result.success) {
+              showInfoModal("Berhasil", "Pesan penyemangat kamera berhasil diupdate!", true);
+              // Update tampilan lokal admin juga biar langsung keliatan previewnya kalau dia buka kamera
+              const cameraMsgEl = document.getElementById('camera-message-display');
+              if(cameraMsgEl) cameraMsgEl.innerText = text;
+            } else {
+              showInfoModal("Gagal", result.message, false);
+            }
+          } catch (err) {
+            showInfoModal("Error", err.message, false);
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Set Pesan Kamera';
+          }
+        });
+        // ... [di dalam DOMContentLoaded, di bawah listener 'set-running-text-btn'] ...
+
+    // ===================================
+    // EVENT LISTENER FITUR ADMIN BARU (FIXED)
+    // ===================================
+
+    // 1. Listener Tombol Manual Alpha (DENGAN MODAL KONFIRMASI)
+    document.getElementById('manual-alpha-btn').addEventListener('click', function() {
+        const now = new Date();
+        const day = now.getDay();
+        const hour = now.getHours();
+
+        // Cek apakah Sabtu jam 16:00 - 23:59
+        // (Kalau mau tes hari ini, remark dulu if-else ini sementara)
+        if (day === 6 && hour >= 16) {
+            
+            // --- MULAI LOGIKA MODAL ---
+            const confirmBtn = document.getElementById('confirmModalBtn');
+            const confirmMsg = document.getElementById('confirmModalMessage');
+            const confirmTitle = document.getElementById('confirmModalTitle');
+            
+            if(confirmTitle) confirmTitle.innerText = "Konfirmasi Alpha Manual";
+            confirmMsg.innerHTML = `
+                YAKIN ingin menandai semua status <strong>'-' (Kosong)</strong> menjadi <strong>'Alpha'</strong> untuk minggu ini?<br><br>
+                Pastikan waktu absensi (16:00 WIB) sudah lewat. Tindakan ini akan mengubah data laporan bulanan.
+            `;
+
+            $('#confirmModal').modal('show');
+
+            // Logika Countdown 10 Detik
+            let countdown = 10;
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = `Konfirmasi (${countdown})`;
+
+            const interval = setInterval(() => {
+                countdown--;
+                confirmBtn.innerText = `Konfirmasi (${countdown})`;
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = 'Konfirmasi';
+                }
+            }, 1000);
+
+            // Aksi Konfirmasi
+            confirmBtn.onclick = async () => {
+                if (confirmBtn.disabled) return;
+                clearInterval(interval);
+                $('#confirmModal').modal('hide');
+                
+                showInfoModal("Memproses...", "Sedang menjalankan pemicu Alpha manual...", false);
+                
+                try {
+                    const result = await postToAPI({ action: 'manualTriggerAlpha' });
+                    if (result.success) {
+                        showInfoModal("Berhasil", result.message, true);
+                        loadDashboard(); 
+                        document.getElementById('refresh-sheet-btn').click(); // Refresh tabel admin
+                    } else {
+                        showInfoModal("Gagal", result.message, false);
+                    }
+                } catch (err) {
+                    showInfoModal("Error", err.message, false);
+                }
+                
+                // Bersihkan listener
+                confirmBtn.onclick = null;
+            };
+
+            // Bersihkan timer kalau modal ditutup manual
+            $('#confirmModal').on('hide.bs.modal', function () {
+                clearInterval(interval);
+                confirmBtn.onclick = null;
+            });
+
+        } else {
+            showInfoModal("Akses Ditolak", "Fitur ini hanya aktif pada hari Sabtu, jam 16:00 - 23:59.", false);
+        }
+    });
+
+
+    // 2. Listener Hitung Ulang Streak (SUDAH DIPISAH - PASTI JALAN)
+    document.getElementById('recalc-streak-btn').addEventListener('click', function() {
+        // Siapkan Modal
+        const confirmBtn = document.getElementById('confirmModalBtn');
+        const confirmMsg = document.getElementById('confirmModalMessage');
+        const confirmTitle = document.getElementById('confirmModalTitle'); 
+        
+        if(confirmTitle) confirmTitle.innerText = "Konfirmasi Reset Streak";
+        confirmMsg.innerHTML = `
+            YAKIN ingin menghitung ulang streak <strong>SEMUA SISWA</strong>?<br><br>
+            Sistem akan membaca ulang seluruh sejarah Log Absensi dari awal tahun untuk memperbaiki angka streak yang error.<br>
+            <strong>Proses ini memakan waktu 1-2 menit. Mohon bersabar.</strong>
+        `;
+
+        $('#confirmModal').modal('show');
+
+        // Logika Countdown
+        let countdown = 10;
+        confirmBtn.disabled = true;
+        confirmBtn.innerText = `Konfirmasi (${countdown})`;
+
+        const interval = setInterval(() => {
+            countdown--;
+            confirmBtn.innerText = `Konfirmasi (${countdown})`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = 'Konfirmasi';
+            }
+        }, 1000);
+
+        confirmBtn.onclick = async () => {
+            if (confirmBtn.disabled) return; 
+            clearInterval(interval); 
+            $('#confirmModal').modal('hide'); 
+
+            const btn = document.getElementById('recalc-streak-btn');
+            const loader = document.getElementById('recalc-loader');
+            
+            // UI Loading State
+            btn.disabled = true;
+            loader.style.display = 'inline-block';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sedang Menghitung...';
+
+            try {
+                showInfoModal("Memproses...", "Sedang mengkalkulasi ulang streak seluruh user. Mohon jangan tutup halaman ini...", false);
+                
+                // Panggil API dengan timeout KHUSUS 120 detik (2 menit)
+                const result = await postToAPI({ action: 'recalculateAllStreaks' }, 120);
+
+                if (result.success) {
+                    showInfoModal("Berhasil", result.message, true);
+                    loadDashboard(); 
+                } else {
+                    showInfoModal("Gagal", result.message, false);
+                }
+            } catch (err) {
+                showInfoModal("Timeout/Error", "Proses memakan waktu lama: " + err.message + ". Coba refresh halaman 1 menit lagi.", false);
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+                btn.innerHTML = 'Refresh Streak';
+                confirmBtn.onclick = null;
+            }
+        };
+        
+        $('#confirmModal').on('hide.bs.modal', function () {
+            clearInterval(interval);
+            confirmBtn.onclick = null;
+        });
+    });
+
+    // ... [di dalam DOMContentLoaded, di bawah listener 'manual-alpha-btn'] ...
+
+    // ===================================
+    // EVENT LISTENER FITUR CRUD BARU
+    // ===================================
+
+    // LISTENER BARU UNTUK TOMBOL REFRESH USER
+    document.getElementById('refresh-user-list-btn').addEventListener('click', () => {
+        document.getElementById('user-list-table').style.display = 'table'; // Tampilkan tabelnya
+        loadUserList(); // Panggil fungsi muat data
+    });
+
+    // 2. Fungsi untuk Muat Daftar User
+    async function loadUserList() {
+      const tableBody = document.getElementById('user-list-body');
+      const loader = document.getElementById('user-list-loader');
+      if (!tableBody || !loader) return;
+
+      loader.style.display = 'block'; // Tampilkan loader
+      tableBody.innerHTML = ''; // Kosongkan tabel
+
+      try {
+        const result = await postToAPI({ action: "getUsers" });
+        if (result.success && result.users) {
+          if (result.users.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Belum ada user.</td></tr>';
+          } else {
+            result.users.forEach(user => {
+              // Buat baris tabel baru
+              const tr = document.createElement('tr');
+              // Simpan data di elemen 'tr' biar gampang diambil
+              tr.dataset.nama = user.nama;
+              tr.dataset.kelas = user.kelas;
+              tr.dataset.password = user.password;
+
+              tr.innerHTML = `
+                <td>${user.nama}</td>
+                <td>${user.kelas}</td>
+                <td>${user.password.includes('@DM1N') ? '***** (Admin)' : user.password}</td>
+                <td><button type="button" class="btn btn-sm btn-outline-primary btn-edit-user">Edit</button></td>
+              `;
+              tableBody.appendChild(tr);
+            });
+          }
+        } else {
+          tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat user: ${result.message}</td></tr>`;
+        }
+      } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error: ${err.message}</td></tr>`;
+      } finally {
+        loader.style.display = 'none'; // Sembunyikan loader
+      }
+    }
+
+    // 3. Listener untuk tombol 'Tambah User' (Membuka modal tambah)
+    document.getElementById('tambah-user-btn').addEventListener('click', () => {
+      document.getElementById('user-add-form').reset(); // Kosongkan form
+      $('#userAddModal').modal('show');
+    });
+
+    // 4. Listener untuk form 'Tambah User' (Submit)
+    document.getElementById('user-add-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerText = "Menyimpan...";
+
+      try {
+        const result = await postToAPI({
+          action: "addUser",
+          nama: document.getElementById('nama-add').value,
+          kelas: document.getElementById('kelas-add').value,
+          password: document.getElementById('password-add').value
+        });
+
+        if (result.success) {
+          showInfoModal("Berhasil", result.message, true);
+          $('#userAddModal').modal('hide');
+          loadUserList(); // Muat ulang daftar user
+        } else {
+          showInfoModal("Gagal", result.message, false);
+        }
+      } catch (err) {
+        showInfoModal("Error", err.message, false);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan User";
+      }
+    });
+
+    // 5. Listener untuk tombol 'Edit' (Delegasi event)
+    document.getElementById('user-list-table').addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn-edit-user')) {
+        const row = e.target.closest('tr');
+        const data = row.dataset;
+
+        // Isi form edit
+        document.getElementById('original-nama-edit').value = data.nama;
+        document.getElementById('nama-edit').value = data.nama;
+        document.getElementById('kelas-edit').value = data.kelas;
+        document.getElementById('password-edit').value = data.password;
+
+        // Reset bagian hapus
+        document.getElementById('delete-user-section').style.display = 'none';
+        document.getElementById('user-hapus-konfirmasi').value = '';
+
+        // Tampilkan modal edit
+        $('#userEditModal').modal('show');
+      }
+    });
+
+    // 6. Listener untuk form 'Edit User' (Submit)
+    document.getElementById('user-edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerText = "Menyimpan...";
+
+      try {
+        const result = await postToAPI({
+          action: "editUser",
+          originalNama: document.getElementById('original-nama-edit').value,
+          nama: document.getElementById('nama-edit').value,
+          kelas: document.getElementById('kelas-edit').value,
+          password: document.getElementById('password-edit').value
+        });
+
+        if (result.success) {
+          showInfoModal("Berhasil", result.message, true);
+          $('#userEditModal').modal('hide');
+          loadUserList(); // Muat ulang daftar user
+        } else {
+          showInfoModal("Gagal", result.message, false);
+        }
+      } catch (err) {
+        showInfoModal("Error", err.message, false);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Simpan Perubahan";
+      }
+    });
+
+    // 7. Listener untuk tombol 'Hapus User' (Inisiasi)
+    document.getElementById('user-hapus-btn-init').addEventListener('click', () => {
+        const deleteSection = document.getElementById('delete-user-section');
+        deleteSection.style.display = (deleteSection.style.display === 'none') ? 'block' : 'none';
+    });
+
+    // 8. Listener untuk tombol 'Hapus Permanen' (Konfirmasi)
+    document.getElementById('user-hapus-btn-confirm').addEventListener('click', async () => {
+      const konfirmasi = document.getElementById('user-hapus-konfirmasi').value;
+      if (konfirmasi !== "Hapus") {
+        showInfoModal("Gagal", "Anda harus mengetik 'Hapus' untuk konfirmasi.", false);
+        return;
+      }
+
+      const btn = document.getElementById('user-hapus-btn-confirm');
+      btn.disabled = true;
+      btn.innerText = "Menghapus...";
+
+      try {
+        const result = await postToAPI({
+          action: "deleteUser",
+          nama: document.getElementById('original-nama-edit').value // Ambil nama asli
+        });
+
+        if (result.success) {
+          showInfoModal("Berhasil", result.message, true);
+          $('#userEditModal').modal('hide');
+          loadUserList(); // Muat ulang daftar user
+        } else {
+          showInfoModal("Gagal", result.message, false);
+        }
+      } catch (err) {
+        showInfoModal("Error", err.message, false);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Hapus Permanen User Ini";
+      }
+    });
+
+    // Fungsi helper untuk tombol override di modal
+    
+    // Listener Modal Detail Simpel (Saat DIBUKA) - Di-upgrade
+    $('#detailModal').on('show.bs.modal', function (event) {
+      const button = $(event.relatedTarget); // Tombol pill yang diklik
+      const detail = button.data('detail');
+      const detailTextEl = $(this).find('#detail-text');
+
+      // ... (kode nampilin status & warna tetap sama) ...
+      detailTextEl.text(detail);
+      detailTextEl.removeClass('text-success text-danger text-primary text-secondary'); 
+      if (detail === 'Hadir') detailTextEl.addClass('text-success');
+      else if (detail === 'Alpha') detailTextEl.addClass('text-danger');
+      else if (detail.toLowerCase().includes('libur') || detail.toLowerCase().includes('acara')) detailTextEl.addClass('text-primary');
+      else detailTextEl.addClass('text-secondary');
+
+      // --- LOGIKA BARU UNTUK TOMBOL "UBAH STATUS" ---
+      $(this).find('#detail-ubah-status-btn').off('click').on('click', () => {
+          // Ambil data dari tombol pill
+          window.pendingOverrideData = {
+              nama: button.data('nama'),
+              kelas: button.data('kelas'),
+              week: button.data('week')
+          };
+          $('#detailModal').modal('hide');
+          $('#overrideChoiceModal').modal('show'); // Tampilkan modal pilihan
+      });
+    });
+
+    // Listener Modal Preview Bukti (Saat DIBUKA) - Di-upgrade
+    $('#previewModal').on('show.bs.modal', function (event) {
+      const button = $(event.relatedTarget);
+      const alasan = button.data('alasan');
+      const url = button.data('url');
+
+      // ... (kode preview GDrive-nya tetap sama) ...
+      let previewUrl = '';
+      try {
+        const fileId = url.split('/d/')[1].split('/')[0];
+        previewUrl = `https://lh3.googleusercontent.com/d/${fileId}=s220`;
+      } catch (e) { previewUrl = ''; }
+      const modal = $(this);
+      modal.find('#preview-alasan').text(alasan || '(Tidak ada alasan)');
+      modal.find('#preview-image').attr('src', previewUrl || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'); // Tampilkan placeholder jika gagal
+      modal.find('#preview-link').attr('href', url);
+
+      // --- LOGIKA BARU UNTUK TOMBOL "UBAH STATUS" ---
+      $(this).find('#preview-ubah-status-btn').off('click').on('click', () => {
+          // Ambil data dari tombol pill
+          window.pendingOverrideData = {
+              nama: button.data('nama'),
+              kelas: button.data('kelas'),
+              week: button.data('week')
+          };
+          $('#previewModal').modal('hide');
+          $('#overrideChoiceModal').modal('show'); // Tampilkan modal pilihan
+      });
+    });
+
         // ===================================
         // EVENT LISTENER KAMERA & MODAL LAIN
         // ===================================
@@ -1080,14 +1762,24 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
             const startCameraBtn = document.getElementById('start-camera-btn');
             const captureBtn = document.getElementById('capture-btn');
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
                 video.srcObject = stream;
                 video.style.display = 'block';
                 photoPreview.style.display = 'none';
                 startCameraBtn.style.display = 'none';
                 captureBtn.style.display = 'inline-block';
+                document.getElementById('toggle-camera-btn').style.display = 'inline-block';
                 video.play();
             } catch (err) { showInfoModal("Gagal", "Tidak bisa mengakses kamera: " + err, false); }
+        });
+        // Listener Tombol Toggle Kamera Izin (BARU)
+        document.getElementById('toggle-camera-btn').addEventListener('click', () => {
+            // Ganti mode
+            currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+
+            // Restart kamera
+            stopCamera(); // Matikan stream lama
+            document.getElementById('start-camera-btn').click(); // Panggil ulang start
         });
 
         // Listener Tombol Jepret Izin
@@ -1189,7 +1881,7 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
             const statusElement = document.getElementById('hadir-photo-status');
             const captureBtn = document.getElementById('hadir-capture-btn');
 
-            if (!stream || !window.pendingAttendanceData) {
+            if (!stream || (!window.pendingAttendanceData && !window.pendingOverrideData)) {
                 showInfoModal("Error", "Data absen tidak lengkap atau kamera belum siap.", false);
                 return;
             }
@@ -1203,28 +1895,47 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
                 canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
                 const imageData = canvas.toDataURL('image/jpeg');
                 stopHadirCamera();
-                statusElement.innerText = "Foto diambil! Mengirim data absensi...";
+                statusElement.innerText = "Foto diambil! Mengirim data...";
 
-                const result = await postToAPI({
-                    action: 'markHadirViaQR',
-                    nama: currentUser.nama,
-                    kelas: currentUser.kelas,
-                    qrCodeData: window.pendingAttendanceData.decodedText,
-                    latitude: window.pendingAttendanceData.latitude,
-                    longitude: window.pendingAttendanceData.longitude,
+                let payload;
+                // --- LOGIKA BARU: Cek apakah ini override admin ---
+                // --- LOGIKA BARU: Cek apakah ini override admin ---
+                // --- LOGIKA LAMA (TANPA LOKASI) ---
+            if (window.pendingOverrideData) {
+
+                payload = {
+                    action: 'adminOverrideHadir',
+                    nama: window.pendingOverrideData.nama,
+                    kelas: window.pendingOverrideData.kelas,
+                    targetWeek: window.pendingOverrideData.week,
                     imageData: imageData
-                });
+                    // HAPUS latitude & longitude
+                };
+            } else {
+                    // Ini alur siswa biasa
+                    payload = {
+                        action: 'markHadirViaQR',
+                        nama: currentUser.nama,
+                        kelas: currentUser.kelas,
+                        qrCodeData: window.pendingAttendanceData.decodedText,
+                        latitude: window.pendingAttendanceData.latitude,
+                        longitude: window.pendingAttendanceData.longitude,
+                        imageData: imageData
+                    };
+                }
 
-                handleServerResponse(result);
-                window.pendingAttendanceData = null;
+                const result = await postToAPI(payload);
+                handleServerResponse(result); // handleServerResponse akan nutup modal
 
             } catch (error) {
                 console.error('Error Capture/Submit Hadir:', error);
                 showInfoModal("Error", "Gagal memproses foto bukti: " + error.message, false);
                 statusElement.innerText = "Gagal: " + error.message;
             } finally {
-                captureBtn.disabled = false;
-            }
+              captureBtn.disabled = false;
+              window.pendingOverrideData = null; // Reset data
+              window.pendingAttendanceData = null; // Reset data
+          }
         });
 
         // Listener Modal Izin (Saat DITUTUP)
@@ -1260,6 +1971,61 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
           modal.find('#preview-link').attr('href', url);
         });
 
+        // ===================================
+        // EVENT LISTENER MODAL PILIHAN OVERRIDE (BARU)
+        // ===================================
+        $('#overrideChoiceModal').on('click', 'button', async function() {
+            const choice = this.id; // 'override-hadir-btn', 'override-izin-btn', 'override-alpha-btn'
+            if (!window.pendingOverrideData) {
+                showInfoModal("Error", "Data user tidak ditemukan. Coba ulangi.", false);
+                return;
+            }
+
+            // Tutup modal pilihan
+            $('#overrideChoiceModal').modal('hide');
+
+            // ... di dalem listener #overrideChoiceModal ...
+        if (choice === 'override-hadir-btn') {
+            // --- KEMBALI KE ALUR LAMA (LANGSUNG BUKA KAMERA) ---
+            $('#qrModal').modal('show');
+            document.getElementById('qr-scan-area').style.display = 'none';
+            document.getElementById('hadir-photo-area').style.display = 'block';
+            await startHadirCamera(); 
+            // --- AKHIR ALUR LAMA ---
+
+        } else if (choice === 'override-izin-btn') {
+                // Tampilkan modal Izin
+                $('#izinModal').modal('show');
+
+            } else if (choice === 'override-alpha-btn') {
+                // Langsung eksekusi Alpha
+                showInfoModal("Memproses...", `Mengubah status ${window.pendingOverrideData.nama}...`, false);
+                try {
+                    const result = await postToAPI({
+                        action: 'adminOverrideAlpha',
+                        nama: window.pendingOverrideData.nama,
+                        kelas: window.pendingOverrideData.kelas,
+                        targetWeek: window.pendingOverrideData.week
+                    });
+                    if (result.success) {
+                        showInfoModal("Berhasil", result.message, true);
+                        document.getElementById('refresh-sheet-btn').click(); // Refresh tabel
+                    } else {
+                        showInfoModal("Gagal", result.message, false);
+                    }
+                } catch (err) {
+                    showInfoModal("Error", err.message, false);
+                } finally {
+                    window.pendingOverrideData = null; // Hapus data
+                }
+            }
+        });
+
+        // Reset data override jika modal ditutup (JAGA-JAGA)
+        $('#qrModal, #izinModal').on('hide.bs.modal', function() {
+            window.pendingOverrideData = null; // Reset flag override
+        });
+
         // Listener Modal Detail Status Simpel (Saat DIBUKA)
         $('#detailModal').on('show.bs.modal', function (event) {
           const button = $(event.relatedTarget);
@@ -1272,7 +2038,7 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
 
           if (detail === 'Hadir') detailTextEl.addClass('text-success');
           else if (detail === 'Alpha') detailTextEl.addClass('text-danger');
-          else if (detail.toLowerCase().includes('libur') || detail.toLowerCase().includes('acara')) detailTextEl.addClass('text-primary');
+          else if (detail.toLowerCase().includes('libur')) detailTextEl.addClass('text-primary');
           else detailTextEl.addClass('text-secondary'); // Default
 
         });
@@ -1282,12 +2048,14 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
     // ===================================
     // FUNGSI API (GLOBAL)
     // ===================================
-    async function postToAPI(data) {
+    // GANTI TOTAL FUNGSI postToAPI DENGAN INI
+    // Sekarang menerima parameter ke-2: timeoutSeconds (Default 20 detik)
+    async function postToAPI(data, timeoutSeconds = 20) {
       console.log("Request dikirim ke API:", data);
 
       const controller = new AbortController();
-      // Naikkan timeout jadi 20 detik untuk jaga-jaga
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      // Gunakan timeoutSeconds yang dikirim, kalikan 1000 buat jadi milidetik
+      const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1000);
 
       try {
         const res = await fetch(API_URL, {
@@ -1297,24 +2065,22 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
           signal: controller.signal
         });
         const text = await res.text();
-        console.log("Respon mentah dari API:", text);
-
-        clearTimeout(timeout);
+        
+        clearTimeout(timeout); // Matikan timer kalau sukses
 
         try {
           return JSON.parse(text);
         } catch (e) {
           console.error("Gagal parse JSON:", text);
-          // Cek apakah errornya HTML halaman login Google
           if (text.toLowerCase().includes("<html") && text.toLowerCase().includes("google")) {
-            throw new Error("Gagal terhubung ke API. Kemungkinan permission deployment salah (Harus 'Anyone').");
+            throw new Error("Gagal terhubung ke API. Cek permission deployment.");
           }
           throw new Error("Server mengembalikan respon yang tidak valid.");
         }
       } catch (err) {
         clearTimeout(timeout);
         if (err.name === 'AbortError') {
-          throw new Error("Server timeout (lebih dari 20 detik). Coba lagi nanti.");
+          throw new Error(`Server timeout (lebih dari ${timeoutSeconds} detik). Proses mungkin masih berjalan di background.`);
         }
         console.error("Fetch Error:", err);
         throw err;
@@ -1324,5 +2090,4 @@ streakText.innerHTML = `Streak <span style="color: #FFA500; font-weight: bold;">
     </script>
 </body>
 </html>
-
 
